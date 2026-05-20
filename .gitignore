@@ -1,0 +1,15 @@
+# Local auth/session state
+*.state.json
+*.storage.json
+
+# Generated media and review sheets
+output/
+downloads/
+*.mp4
+*.mov
+*.jpg
+*.jpeg
+*.png
+
+# macOS
+.DS_Store
