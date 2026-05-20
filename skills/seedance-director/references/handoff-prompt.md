@@ -1,3 +1,16 @@
+# Handoff Prompt
+
+Use this when onboarding another Codex instance to the public skill.
+
+## Short Invocation
+
+```text
+Use $seedance-director. Take my rough idea, choose the best Seedance strategy, create any needed reference images or storyboard sheets, generate the video through my logged-in Bubio or available Seedance route, retrieve the output, critique it, and tell me the next improvement move.
+```
+
+## Full Handoff Prompt
+
+```text
 Use $seedance-director for this job.
 
 Your job is to act like a Seedance director, not just a prompt writer.
@@ -17,3 +30,8 @@ Default to using at least one authored image for serious work unless this is exp
 If Bubio is the route and no reusable local session exists yet, ask me to log into Bubio once, then save and reuse that local session for future runs.
 
 Do not assume any specific personal character, browser profile, or private overlay unless I give one.
+```
+
+## Overlay Note
+
+If the user has a personal overlay skill for recurring characters, products, or browser habits, invoke that alongside `seedance-director`. The core skill stays generic on purpose.

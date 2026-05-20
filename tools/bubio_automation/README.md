@@ -45,7 +45,7 @@ The wrapper script uses Codex's bundled Node runtime and bundled Playwright pack
 Open a dedicated Chrome session, log into Bubio once, then save reusable auth state:
 
 ```zsh
-"/Users/danielcabezas/Documents/New project/tools/bubio_automation/bubio_runner.sh" capture-auth
+./bubio_runner.sh capture-auth
 ```
 
 After Bubio studio is ready in the opened Chrome window, come back to the terminal and press Enter.
@@ -55,10 +55,10 @@ After Bubio studio is ready in the opened Chrome window, come back to the termin
 If you are already logged into Bubio in your everyday Chrome profile, try cloning that profile into a dedicated automation profile and export auth from there:
 
 ```zsh
-"/Users/danielcabezas/Documents/New project/tools/bubio_automation/bubio_runner.sh" bootstrap-auth-from-profile --chrome-profile-dir "Profile 6"
+./bubio_runner.sh bootstrap-auth-from-profile --chrome-profile-dir "Default"
 ```
 
-For this machine, `Main 2` maps to `Profile 6`.
+If your everyday Chrome login lives in another profile, replace `Default` with the correct Chrome profile directory, for example `Profile 1`.
 
 This is the preferred shortcut because it keeps the long-term automation on its own profile while still borrowing the already-authenticated session when possible.
 
@@ -67,7 +67,7 @@ This is the preferred shortcut because it keeps the long-term automation on its 
 Useful when Bubio changes its UI and we need fresh labels/screenshots:
 
 ```zsh
-"/Users/danielcabezas/Documents/New project/tools/bubio_automation/bubio_runner.sh" inspect-studio
+./bubio_runner.sh inspect-studio
 ```
 
 This saves a screenshot to:
@@ -79,7 +79,7 @@ This saves a screenshot to:
 Useful when a video has already rendered in Bubio and you just want the MP4 quickly:
 
 ```zsh
-"/Users/danielcabezas/Documents/New project/tools/bubio_automation/bubio_runner.sh" download-latest --download-name "latest.mp4"
+./bubio_runner.sh download-latest --download-name "latest.mp4"
 ```
 
 ### 4. Generate and download
@@ -87,7 +87,7 @@ Useful when a video has already rendered in Bubio and you just want the MP4 quic
 Text-only example:
 
 ```zsh
-"/Users/danielcabezas/Documents/New project/tools/bubio_automation/bubio_runner.sh" generate \
+./bubio_runner.sh generate \
   --prompt-file "/absolute/path/to/prompt.txt" \
   --aspect 16:9 \
   --duration 15 \
@@ -98,7 +98,7 @@ Text-only example:
 Reference-image example:
 
 ```zsh
-"/Users/danielcabezas/Documents/New project/tools/bubio_automation/bubio_runner.sh" generate \
+./bubio_runner.sh generate \
   --prompt-file "/absolute/path/to/prompt.txt" \
   --ref "/absolute/path/to/frame.png" \
   --prefix-first-frame \
@@ -129,7 +129,7 @@ What still needs a second pass:
 
 Validated on this machine on 2026-04-27:
 
-- auth bootstrapped successfully from Chrome `Profile 6` (`Daniel (Main 2)`)
+- auth bootstrapped successfully from an existing Chrome profile on the validating machine
 - headless studio inspection works
 - `download-latest` works
 - `generate` works end to end for a real Bubio run and saves the MP4 automatically
@@ -137,6 +137,6 @@ Validated on this machine on 2026-04-27:
 ## Recommended next moves
 
 1. Run `capture-auth` once so we have a reusable dedicated Bubio session.
-2. Or first try `bootstrap-auth-from-profile --chrome-profile-dir "Profile 6"` to reuse the existing `Main 2` Chrome login.
+2. Or first try `bootstrap-auth-from-profile --chrome-profile-dir "Default"` to reuse the existing Chrome login, and replace `Default` if your active Chrome profile uses another directory.
 3. Run `inspect-studio` and keep the debug screenshot in case Bubio moves controls.
 4. Use `generate` for the next text-only or single-reference run, then tighten selectors based on real usage.

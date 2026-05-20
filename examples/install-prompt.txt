@@ -1,0 +1,7 @@
+Use $skill-installer to install:
+https://github.com/DannyExperiments/seedance-director-kit/tree/main/skills/seedance-director
+
+After install, restart Codex.
+
+Then use:
+Use $seedance-director. Take my rough idea, choose the best Seedance strategy, create any needed reference images or storyboard sheets, generate the video through my logged-in Bubio or available Seedance route, retrieve the output, critique it, and tell me the next improvement move. If Bubio is the route and no saved session exists yet, ask me to log in once and then reuse that local session.

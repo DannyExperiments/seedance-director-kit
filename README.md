@@ -8,7 +8,7 @@ It is designed for the workflow:
 
 ## What is in this kit
 
-- `skill/seedance-director/`
+- `skills/seedance-director/`
   - the installable public Codex skill
 - `docs/`
   - the playbooks behind the skill
@@ -25,11 +25,20 @@ It is designed for the workflow:
 
 ## Install
 
-Copy the bundled skill folder into Codex skills:
+Install via Codex with the built-in skill installer:
+
+```text
+Use $skill-installer to install:
+https://github.com/DannyExperiments/seedance-director-kit/tree/main/skills/seedance-director
+```
+
+Then restart Codex.
+
+Manual fallback:
 
 ```zsh
 mkdir -p ~/.codex/skills
-cp -R "/absolute/path/to/seedance-director-kit/skill/seedance-director" ~/.codex/skills/
+cp -R "/absolute/path/to/seedance-director-kit/skills/seedance-director" ~/.codex/skills/
 ```
 
 If the user wants faster Bubio execution, keep this repo available locally and use:
@@ -37,6 +46,7 @@ If the user wants faster Bubio execution, keep this repo available locally and u
 - `tools/bubio_automation/bubio_runner.sh`
 
 The user logs into Bubio once. The runner stores only reusable local auth state, not a password.
+If no saved Bubio session exists yet, Codex should ask the user to log in once and then reuse that saved local session on future runs.
 
 ## Use
 
@@ -49,6 +59,8 @@ Use $seedance-director. Take my rough idea, choose the best Seedance strategy, c
 The fuller handoff is in:
 
 - `examples/full-handoff-prompt.txt`
+
+The installable skill is self-contained: the public playbooks, prompt architecture, reference-image system, critique loop, review-sheet helper, and bundled Bubio runner all live inside `skills/seedance-director/`, so they come along when another Codex installs that path.
 
 ## Recommended sharing format
 
