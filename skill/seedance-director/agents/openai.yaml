@@ -1,4 +1,0 @@
-interface:
-  display_name: "Seedance Director"
-  short_description: "Turn a rough idea into a directed Seedance video"
-  default_prompt: "Use $seedance-director to turn my idea into the best possible Seedance video: choose the strategy, create reference images or a storyboard, run the generation, and critique the result."
