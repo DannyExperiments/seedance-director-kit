@@ -25,7 +25,7 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
 4. Draft a Seedance-native prompt that lets the image carry identity while text carries motion, camera, environment reaction, and ending.
 5. Run the generation through the user's available Seedance route:
    - a logged-in Bubio browser session,
-   - the bundled Bubio automation runner in `scripts/bubio_runner.sh` if appropriate,
+   - the bundled Bubio automation runner via `zsh scripts/bubio_runner.sh` if appropriate,
    - another approved Seedance endpoint if the user uses one.
    - If Bubio is the route and no reusable session exists yet, prompt the user to log into Bubio once, then save and reuse the local session.
 6. Retrieve the result, make a review sheet, and critique it.

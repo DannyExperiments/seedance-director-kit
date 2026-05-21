@@ -45,7 +45,7 @@ The wrapper script uses Codex's bundled Node runtime and bundled Playwright pack
 Open a dedicated Chrome session, log into Bubio once, then save reusable auth state:
 
 ```zsh
-./bubio_runner.sh capture-auth
+zsh ./bubio_runner.sh capture-auth
 ```
 
 After Bubio studio is ready in the opened Chrome window, come back to the terminal and press Enter.
@@ -55,7 +55,7 @@ After Bubio studio is ready in the opened Chrome window, come back to the termin
 If you are already logged into Bubio in your everyday Chrome profile, try cloning that profile into a dedicated automation profile and export auth from there:
 
 ```zsh
-./bubio_runner.sh bootstrap-auth-from-profile --chrome-profile-dir "Default"
+zsh ./bubio_runner.sh bootstrap-auth-from-profile --chrome-profile-dir "Default"
 ```
 
 If your everyday Chrome login lives in another profile, replace `Default` with the correct Chrome profile directory, for example `Profile 1`.
@@ -67,7 +67,7 @@ This is the preferred shortcut because it keeps the long-term automation on its 
 Useful when Bubio changes its UI and we need fresh labels/screenshots:
 
 ```zsh
-./bubio_runner.sh inspect-studio
+zsh ./bubio_runner.sh inspect-studio
 ```
 
 This saves a screenshot to:
@@ -79,7 +79,7 @@ This saves a screenshot to:
 Useful when a video has already rendered in Bubio and you just want the MP4 quickly:
 
 ```zsh
-./bubio_runner.sh download-latest --download-name "latest.mp4"
+zsh ./bubio_runner.sh download-latest --download-name "latest.mp4"
 ```
 
 ### 4. Generate and download
@@ -87,7 +87,7 @@ Useful when a video has already rendered in Bubio and you just want the MP4 quic
 Text-only example:
 
 ```zsh
-./bubio_runner.sh generate \
+zsh ./bubio_runner.sh generate \
   --prompt-file "/absolute/path/to/prompt.txt" \
   --aspect 16:9 \
   --duration 15 \
@@ -98,7 +98,7 @@ Text-only example:
 Reference-image example:
 
 ```zsh
-./bubio_runner.sh generate \
+zsh ./bubio_runner.sh generate \
   --prompt-file "/absolute/path/to/prompt.txt" \
   --ref "/absolute/path/to/frame.png" \
   --prefix-first-frame \

@@ -28,11 +28,13 @@ The user may want one installable skill that already includes the practical fast
 ## Typical commands
 
 ```zsh
-scripts/bubio_runner.sh capture-auth
-scripts/bubio_runner.sh inspect-studio
-scripts/bubio_runner.sh download-latest --download-name "latest.mp4"
-scripts/bubio_runner.sh generate --prompt-file "/absolute/path/to/prompt.txt" --aspect 16:9 --duration 15 --sound on
+zsh scripts/bubio_runner.sh capture-auth
+zsh scripts/bubio_runner.sh inspect-studio
+zsh scripts/bubio_runner.sh download-latest --download-name "latest.mp4"
+zsh scripts/bubio_runner.sh generate --prompt-file "/absolute/path/to/prompt.txt" --aspect 16:9 --duration 15 --sound on
 ```
+
+GitHub ZIP installs may not preserve executable bits on shell scripts, so invoke the runner with `zsh` rather than relying on `./scripts/bubio_runner.sh`.
 
 ## Limits
 

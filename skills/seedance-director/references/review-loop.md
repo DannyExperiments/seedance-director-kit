@@ -4,7 +4,7 @@
 
 Do not judge a clip by the first second alone. Pull a frame sheet and evaluate the whole arc.
 
-Use `scripts/make_review_sheet.sh input.mp4 output.jpg [fps]`.
+Use `zsh scripts/make_review_sheet.sh input.mp4 output.jpg [fps]`.
 
 Recommended sampling:
 

@@ -17,6 +17,12 @@ See:
 - `tools/bubio_automation/bubio_runner.sh`
 - `tools/bubio_automation/bubio_runner.cjs`
 
+Invoke the shell wrapper with `zsh`, because GitHub ZIP installs may not preserve executable bits:
+
+```zsh
+zsh tools/bubio_automation/bubio_runner.sh doctor
+```
+
 ## Security model
 
 - do not store passwords,
