@@ -9,6 +9,7 @@ This is a small Playwright-based fast path for Bubio video generation. It is mea
 5. pull the latest finished MP4 directly when needed
 6. print thread-delivery Markdown and a review-sheet command after an MP4 is saved
 7. submit slow jobs without waiting, so the agent can resume on a heartbeat
+8. refuse prompt-unmatched stale/background MP4s by default
 
 ## Why this exists
 
@@ -173,6 +174,8 @@ This version is intentionally narrow and honest:
 - supports best-effort media attachment
 - uses prompt steering for first-frame behavior via `--prefix-first-frame`
 - downloads are now pulled from Bubio's signed `studio/videos/*.mp4` result URL instead of relying on the hover-only UI download button
+- signed URLs are filtered by prompt/card match when a prompt is provided; a newly signed URL from an old card is not enough
+- candidate-debug JSON and pre-submit evidence are saved to help diagnose retrieval mistakes
 - after MP4 retrieval, prints thread-return Markdown and a review-sheet command
 - `--submit-only` supports slow renders without a long passive wait
 

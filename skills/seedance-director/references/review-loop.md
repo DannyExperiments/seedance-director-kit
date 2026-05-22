@@ -63,7 +63,21 @@ Fix:
 - return to the prompt editor,
 - verify current refs, aspect, duration, and cost,
 - submit only after matching the current job state,
-- after generation, match result cards by prompt/timestamp/nearby metadata rather than the first visible card.
+- after generation, match result cards by prompt/timestamp/nearby metadata rather than the first visible card,
+- if retrieval cannot find a prompt-matched card, fail loudly and inspect candidate-debug JSON instead of returning the wrong MP4.
+
+### Retrieval False Positive
+
+Likely if:
+- the returned MP4 has a fresh signed URL but the review sheet shows a totally different concept,
+- `download-latest` returns an older card despite using the current prompt,
+- the card text around the video has zero or weak overlap with the current prompt.
+
+Fix:
+- require positive prompt/card matching by default,
+- treat new signed URL as a weak signal only,
+- save candidate-debug JSON and pre-submit screenshots,
+- use `--allow-unmatched` only for manual recovery after visual inspection.
 
 ### Prompt Problem
 

@@ -52,6 +52,7 @@ Generate options:
   --prefix-first-frame   Prefix prompt with "Use @ref1 as the exact first frame."
   --dry-run              Fill the form and stop before clicking Generate.
   --submit-only          Submit the job, save submit evidence, and exit without waiting.
+  --allow-unmatched      Allow downloading a video that does not match the prompt. Unsafe fallback.
 
 Examples:
   bubio_runner.sh capture-auth
@@ -96,7 +97,7 @@ function parseArgs(argv) {
       continue;
     }
     const key = token.slice(2);
-    if (["headed", "headless", "prefix-first-frame", "help", "dry-run", "exercise-form", "submit-only"].includes(key)) {
+    if (["headed", "headless", "prefix-first-frame", "help", "dry-run", "exercise-form", "submit-only", "allow-unmatched"].includes(key)) {
       options[key] = true;
       continue;
     }
@@ -977,30 +978,79 @@ function isStudioResultVideoUrl(url) {
   return /\/studio\/videos\/.+\.mp4/i.test(url);
 }
 
-function promptMatchScore(text, prompt) {
-  if (!text || !prompt) {
-    return 0;
+const PROMPT_MATCH_STOPWORDS = new Set([
+  "about", "across", "after", "allow", "attached", "audio", "behind", "before", "camera", "center",
+  "cinematic", "clearly", "close", "continuous", "control", "detail", "direction", "duration",
+  "effect", "ending", "environment", "exact", "frame", "frames", "gentle", "image", "lighting",
+  "middle", "motion", "moving", "natural", "opening", "prompt", "reference", "ref1", "ref2", "ref3",
+  "slightly", "sound", "style", "toward", "use", "using", "visible", "video", "without",
+]);
+
+function significantPromptWords(prompt) {
+  if (!prompt) {
+    return [];
   }
-  const normalizedText = text.toLowerCase();
-  const words = Array.from(new Set(
+  return Array.from(new Set(
     prompt.toLowerCase()
+      .replace(/@\s*ref\s*\d+/g, " ")
+      .replace(/@\s*image\s*\d+/g, " ")
       .replace(/[^a-z0-9\s-]+/g, " ")
       .split(/\s+/)
-      .filter((word) => word.length >= 6)
-      .slice(0, 80),
+      .map((word) => word.replace(/^-+|-+$/g, ""))
+      .filter((word) => word.length >= 5)
+      .filter((word) => !PROMPT_MATCH_STOPWORDS.has(word))
+      .slice(0, 120),
   ));
-  let score = 0;
-  for (const word of words) {
-    if (normalizedText.includes(word)) {
-      score += 1;
-    }
+}
+
+function promptMatchDetails(text, prompt) {
+  const words = significantPromptWords(prompt);
+  if (!text || !prompt || !words.length) {
+    return {
+      score: 0,
+      possible: words.length,
+      required: 0,
+      ratio: 0,
+      matchedWords: [],
+      passes: !prompt,
+    };
   }
-  return score;
+  const normalizedText = text.toLowerCase();
+  const matchedWords = words.filter((word) => normalizedText.includes(word));
+  const required = Math.min(words.length, Math.min(12, Math.max(6, Math.ceil(words.length * 0.18))));
+  const score = matchedWords.length;
+  return {
+    score,
+    possible: words.length,
+    required,
+    ratio: words.length ? score / words.length : 0,
+    matchedWords,
+    passes: score >= required,
+  };
+}
+
+function annotateVideoCandidates(candidates, prompt) {
+  return candidates.map((candidate) => {
+    const match = promptMatchDetails(candidate.cardText, prompt);
+    return {
+      ...candidate,
+      promptScore: match.score,
+      promptPossible: match.possible,
+      promptRequired: match.required,
+      promptMatchRatio: match.ratio,
+      promptMatchedWords: match.matchedWords,
+      promptMatchPasses: match.passes,
+    };
+  });
 }
 
 function rankVideoCandidates(candidates, prompt) {
-  return candidates.slice().sort((a, b) => {
-    const promptDiff = promptMatchScore(b.cardText, prompt) - promptMatchScore(a.cardText, prompt);
+  return annotateVideoCandidates(candidates, prompt).slice().sort((a, b) => {
+    const passDiff = Number(b.promptMatchPasses) - Number(a.promptMatchPasses);
+    if (passDiff !== 0) {
+      return passDiff;
+    }
+    const promptDiff = (b.promptScore || 0) - (a.promptScore || 0);
     if (promptDiff !== 0) {
       return promptDiff;
     }
@@ -1018,6 +1068,66 @@ function rankVideoCandidates(candidates, prompt) {
     }
     return (a.x ?? 999999) - (b.x ?? 999999);
   });
+}
+
+function selectVideoCandidate(candidates, prompt, options = {}) {
+  const ranked = rankVideoCandidates(candidates, prompt);
+  const best = ranked[0] || null;
+  if (!best) {
+    return { selected: null, ranked, reason: "no-candidates" };
+  }
+  if (!prompt || options.allowUnmatched || best.promptMatchPasses) {
+    return { selected: best, ranked, reason: best.promptMatchPasses ? "prompt-match" : "unmatched-allowed" };
+  }
+  return { selected: null, ranked, reason: "best-candidate-did-not-match-prompt" };
+}
+
+function sanitizeVideoCandidateForDebug(candidate) {
+  let urlHost = "";
+  let urlPathname = "";
+  let urlBasename = "";
+  try {
+    const parsed = new URL(candidate.url);
+    urlHost = parsed.host;
+    urlPathname = parsed.pathname;
+    urlBasename = path.basename(parsed.pathname);
+  } catch (error) {
+    urlPathname = "";
+    urlBasename = "";
+  }
+  return {
+    urlHost,
+    urlPathname,
+    urlBasename,
+    cardTextPreview: (candidate.cardText || "").slice(0, 600),
+    x: candidate.x,
+    y: candidate.y,
+    width: candidate.width,
+    height: candidate.height,
+    area: candidate.area,
+    visible: candidate.visible,
+    promptScore: candidate.promptScore || 0,
+    promptPossible: candidate.promptPossible || 0,
+    promptRequired: candidate.promptRequired || 0,
+    promptMatchRatio: candidate.promptMatchRatio || 0,
+    promptMatchedWords: candidate.promptMatchedWords || [],
+    promptMatchPasses: Boolean(candidate.promptMatchPasses),
+  };
+}
+
+function writeCandidateDebug(outputDir, label, rankedCandidates, selected, reason, prompt) {
+  ensureSecureDir(outputDir);
+  const debugPath = path.join(outputDir, `bubio-video-candidates-${label}-${Date.now()}.json`);
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    reason,
+    promptWordCount: significantPromptWords(prompt).length,
+    selected: selected ? sanitizeVideoCandidateForDebug(selected) : null,
+    candidates: rankedCandidates.slice(0, 20).map(sanitizeVideoCandidateForDebug),
+    note: "Signed URLs are intentionally not stored; only host/path/basename and card metadata are recorded.",
+  };
+  fs.writeFileSync(debugPath, `${JSON.stringify(payload, null, 2)}\n`);
+  return debugPath;
 }
 
 async function getStudioVideoCandidatesFromPage(page) {
@@ -1057,15 +1167,18 @@ async function getStudioVideoCandidatesFromPage(page) {
 
     function surroundingText(node) {
       let current = hostVideoNode(node);
-      let best = "";
+      let fallback = "";
       for (let i = 0; i < 8 && current; i += 1) {
         const text = ((current.innerText || current.textContent || "")).replace(/\s+/g, " ").trim();
-        if (text.length > best.length) {
-          best = text.slice(0, 1600);
+        if (!fallback && text) {
+          fallback = text;
+        }
+        if (text.length >= 20 && text.length <= 1200) {
+          return text.slice(0, 1200);
         }
         current = current.parentElement;
       }
-      return best;
+      return fallback.slice(0, 1200);
     }
 
     return Array.from(document.querySelectorAll("video, source"))
@@ -1091,13 +1204,9 @@ async function getStudioVideoCandidatesFromPage(page) {
   return Array.from(unique.values());
 }
 
-async function getLatestVideoUrlFromPage(page, prompt) {
-  const candidates = rankVideoCandidates(await getStudioVideoCandidatesFromPage(page), prompt);
-  const signedStudioVideo = candidates[0];
-  if (!signedStudioVideo) {
-    return null;
-  }
-  return signedStudioVideo.url;
+async function getLatestVideoCandidateFromPage(page, prompt, options = {}) {
+  const candidates = await getStudioVideoCandidatesFromPage(page);
+  return selectVideoCandidate(candidates, prompt, options);
 }
 
 async function getStudioVideoUrlsFromPage(page) {
@@ -1115,20 +1224,22 @@ async function nudgeResultViewport(page, attempt) {
   }
 }
 
-async function waitForFreshVideoUrl(page, previousUrls, timeoutMs, prompt) {
+async function waitForFreshVideoCandidate(page, previousUrls, timeoutMs, prompt, options = {}) {
   const start = Date.now();
   let attempt = 0;
+  let lastSelection = { selected: null, ranked: [], reason: "not-started" };
   while (Date.now() - start < timeoutMs) {
-    const candidates = rankVideoCandidates(await getStudioVideoCandidatesFromPage(page), prompt);
-    const fresh = candidates.find((candidate) => !previousUrls.has(candidate.url));
-    if (fresh) {
-      return fresh.url;
+    const candidates = await getStudioVideoCandidatesFromPage(page);
+    const freshCandidates = candidates.filter((candidate) => !previousUrls.has(candidate.url));
+    lastSelection = selectVideoCandidate(freshCandidates, prompt, options);
+    if (lastSelection.selected) {
+      return lastSelection;
     }
     await nudgeResultViewport(page, attempt);
     attempt += 1;
     await sleep(2000);
   }
-  return null;
+  return lastSelection;
 }
 
 async function fetchAndSaveVideoUrl(videoUrl, outputDir, requestedName) {
@@ -1151,6 +1262,29 @@ function sanitizeFilename(name) {
 function suggestedReviewSheetPath(videoPath) {
   const parsed = path.parse(videoPath);
   return path.join(parsed.dir, `${parsed.name}-review-sheet.jpg`);
+}
+
+async function savePreSubmitEvidence(page, outputDir, options, refs) {
+  const timestamp = Date.now();
+  const screenshotPath = path.join(outputDir, `bubio-pre-submit-${timestamp}.png`);
+  const statePath = path.join(outputDir, `bubio-pre-submit-${timestamp}.json`);
+  await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => {});
+  const visibleText = await page.locator("body").innerText({ timeout: 3000 }).catch(() => "");
+  fs.writeFileSync(statePath, `${JSON.stringify({
+    capturedAt: new Date().toISOString(),
+    requestedModel: options.model || "Seedance 2",
+    requestedMode: options.mode || "Create",
+    requestedAspect: options.aspect || null,
+    requestedDuration: options.duration || null,
+    requestedSound: options.sound || null,
+    refBasenames: refs.map((ref) => path.basename(ref)),
+    visibleTextPreview: visibleText.replace(/\s+/g, " ").slice(0, 3000),
+    screenshotPath,
+    note: "Pre-submit evidence after prompt, refs, aspect, duration, and sound were configured.",
+  }, null, 2)}\n`);
+  console.log(`Saved pre-submit evidence: ${screenshotPath}`);
+  console.log(`Saved pre-submit state: ${statePath}`);
+  return { screenshotPath, statePath };
 }
 
 function printThreadDeliveryHint(videoPath) {
@@ -1408,11 +1542,15 @@ async function runDownloadLatest(options) {
     logStep("Checking Bubio auth state");
     await ensureLoggedIn(page, stateFile);
     logStep("Resolving newest signed video URL from the page");
-    const videoUrl = await getLatestVideoUrlFromPage(page, prompt);
-    if (!videoUrl) {
-      fail("Could not find a signed studio video URL on the page.");
+    const selection = await getLatestVideoCandidateFromPage(page, prompt, {
+      allowUnmatched: Boolean(options["allow-unmatched"]),
+    });
+    const debugPath = writeCandidateDebug(outputDir, "download-latest", selection.ranked, selection.selected, selection.reason, prompt);
+    console.log(`Saved candidate debug: ${debugPath}`);
+    if (!selection.selected) {
+      fail(`Could not find a signed studio video URL that matches the current prompt. Reason: ${selection.reason}. Use --allow-unmatched only for manual recovery after inspecting ${debugPath}.`);
     }
-    const finalPath = await fetchAndSaveVideoUrl(videoUrl, outputDir, options["download-name"]);
+    const finalPath = await fetchAndSaveVideoUrl(selection.selected.url, outputDir, options["download-name"]);
     console.log(`Saved latest video to ${finalPath}`);
     printThreadDeliveryHint(finalPath);
   } finally {
@@ -1468,6 +1606,7 @@ async function runGenerate(options) {
     await ensureDuration(page, options.duration);
     logStep(`Selecting sound: ${options.sound || "unchanged"}`);
     await ensureSound(page, options.sound);
+    await savePreSubmitEvidence(page, outputDir, options, refs);
 
     if (options["dry-run"]) {
       const dryRunShot = path.join(outputDir, `bubio-dry-run-${Date.now()}.png`);
@@ -1513,19 +1652,27 @@ async function runGenerate(options) {
     }
 
     logStep("Waiting for a fresh signed result URL");
-    let freshVideoUrl = await waitForFreshVideoUrl(page, previousVideoUrls, timeoutMs, prompt);
-    if (!freshVideoUrl) {
-      logStep("Fresh result URL not detected yet; falling back to download-count signal");
+    let freshSelection = await waitForFreshVideoCandidate(page, previousVideoUrls, timeoutMs, prompt, {
+      allowUnmatched: Boolean(options["allow-unmatched"]),
+    });
+    if (!freshSelection.selected) {
+      const debugPath = writeCandidateDebug(outputDir, "generate-wait-timeout", freshSelection.ranked, freshSelection.selected, freshSelection.reason, prompt);
+      console.log(`Saved candidate debug: ${debugPath}`);
+      logStep("Fresh prompt-matched result URL not detected yet; falling back to download-count signal");
       const sawNewDownload = await waitForFreshDownloadTarget(page, beforeDownloads, timeoutMs);
       if (!sawNewDownload) {
-        fail("Timed out waiting for a new downloadable result.");
+        fail(`Timed out waiting for a new downloadable result. Candidate debug: ${debugPath}`);
       }
-      freshVideoUrl = await waitForFreshVideoUrl(page, previousVideoUrls, 30000, prompt);
+      freshSelection = await waitForFreshVideoCandidate(page, previousVideoUrls, 30000, prompt, {
+        allowUnmatched: Boolean(options["allow-unmatched"]),
+      });
     }
-    if (!freshVideoUrl) {
-      fail("A new result appeared, but no fresh signed studio video URL was detected.");
+    const debugPath = writeCandidateDebug(outputDir, "generate-final", freshSelection.ranked, freshSelection.selected, freshSelection.reason, prompt);
+    console.log(`Saved candidate debug: ${debugPath}`);
+    if (!freshSelection.selected) {
+      fail(`A result may have appeared, but no fresh signed studio video URL matched the prompt. Reason: ${freshSelection.reason}. Use --allow-unmatched only for manual recovery after inspecting ${debugPath}.`);
     }
-    const finalPath = await fetchAndSaveVideoUrl(freshVideoUrl, outputDir, options["download-name"]);
+    const finalPath = await fetchAndSaveVideoUrl(freshSelection.selected.url, outputDir, options["download-name"]);
     console.log(`Saved video to ${finalPath}`);
     printThreadDeliveryHint(finalPath);
   } finally {

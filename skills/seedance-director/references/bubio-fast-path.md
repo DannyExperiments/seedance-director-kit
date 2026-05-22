@@ -77,10 +77,14 @@ Then set a 5-minute heartbeat/checkpoint if the client supports it. On return, r
 ## Retrieval Rules
 
 - Prefer fresh signed `/studio/videos/*.mp4` result URLs.
+- A newly signed URL is not proof that the card belongs to the current job. Old cards can mint fresh signed URLs.
+- When a prompt is supplied, require a positive prompt/card-text match before saving the MP4.
 - Do not trust the first visible `<video>` node; it may be a background loop or stale virtualized feed card.
 - Do not scroll deep into old result history while looking for a fresh render unless the current card is not visible.
 - Match by current prompt, timestamp, top/current result card, and nearby card metadata.
-- If the first retrieved file is the wrong old/background clip, discard it and state that it was not the current result.
+- If no prompt-matched result appears, fail and inspect the saved candidate-debug JSON instead of returning a wrong MP4.
+- Use `--allow-unmatched` only as a manual recovery/debug escape hatch after inspecting the candidate-debug file.
+- The runner saves pre-submit screenshots and JSON so refs/aspect/duration/sound can be audited after a bad run.
 
 ## API Discovery Mode
 

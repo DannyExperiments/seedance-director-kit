@@ -38,6 +38,7 @@ zsh tools/bubio_automation/bubio_runner.sh doctor
 - pull completed signed MP4 URLs quickly,
 - thread-first MP4 return plus review-sheet critique after retrieval.
 - submit-only mode for slow renders, so the agent can set a heartbeat instead of waiting idly.
+- strict retrieval by prompt/card match, so stale signed URLs do not become false successes.
 
 ## API discovery
 
@@ -81,4 +82,4 @@ zsh tools/bubio_automation/bubio_runner.sh generate \
   --submit-only
 ```
 
-Then set a 5-minute heartbeat/checkpoint if available. On return, run the printed `download-latest --prompt-file ...` command, verify the result belongs to the current job, return the MP4 in-thread, create the review sheet, critique it, and save a run lesson.
+Then set a 5-minute heartbeat/checkpoint if available. On return, run the printed `download-latest --prompt-file ...` command. If the runner cannot find a prompt-matched candidate, inspect the saved candidate-debug JSON instead of returning an unmatched MP4. Return the MP4 in-thread only after the match is credible, then create the review sheet, critique it, and save a run lesson.
