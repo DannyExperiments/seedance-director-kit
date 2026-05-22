@@ -6,6 +6,7 @@
 - Put camera language early.
 - Keep one dominant action per shot.
 - Use setup -> trigger -> escalation -> payoff for most 15-second clips.
+- For action/trailer asks, every timed beat must visibly change the situation. Avoid a beautiful held tableau where the subject simply sustains the same effect for 15 seconds.
 - Add physical anchors: rain, dust, sparks, debris, cloth delay, reflections, smoke, bubbles, wake rings, drifting particles.
 - Avoid asking for readable in-world text unless the text itself is the target artifact.
 
@@ -37,6 +38,22 @@ FORMAT: 15s / continuous cinematic scene.
 Camera: [motivated camera plan].
 Style: cinematic realism, physical lighting, shallow depth of field, subtle grain, natural motion blur.
 Audio: [ambient bed], [key effects], no music unless requested.
+```
+
+## 15s Action Trailer With State Change
+
+Use this instead of the generic core when the user asks for "action trailer", "epic action", disaster rescue, superpower showcase, combat, chase, or collapse.
+
+```text
+FORMAT: 15s / cinematic action trailer with visible state change.
+Use the attached image as [first frame/reference] and preserve [core subject/world/style].
+(0-2s) Immediate threat motion: [danger is already moving/worsening], not a static pose. Camera [close/low/wide] establishes geography.
+(2-5s) Hero reaction: [hero physically strains, dodges, runs, launches, catches, or redirects]. The environment reacts with [debris/water/light/cloth/smoke] moving in a clear direction.
+(5-9s) Escalation: [threat changes position or speed], [secondary object/person/environment element] moves, and cause -> effect remains readable.
+(9-12s) Decisive reversal/contact: [one unmistakable impact, catch, snap-back, strike, save, or transformation].
+(12-15s) Payoff: the final image is materially different from the opening; [aftermath/position advantage/saved object/fallen threat], final 0.7 seconds hold.
+Camera: motivated scale changes, readable geography, no random spin.
+Guardrail: do not sustain one levitation/force-field/tableau for the whole clip. Show threat -> reaction -> reversal -> changed final state.
 ```
 
 ## Product / Commercial Architecture

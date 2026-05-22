@@ -13,6 +13,22 @@ Style: cinematic realism, physical lighting, shallow depth of field, subtle grai
 Audio: [ambient bed], [key effects], no music unless requested.
 ```
 
+## 15s Action Trailer With State Change
+
+Use this instead of the generic trailer when the user asks for action, powers, combat, rescue, collapse, pursuit, or disaster spectacle. A visually beautiful held effect is not enough; each beat must materially change the situation.
+
+```text
+FORMAT: 15s / cinematic action trailer with visible state change.
+Use the attached image as [first frame/reference] and preserve [core subject/world/style].
+(0-2s) Immediate threat motion: [danger is already moving/worsening], not a static pose. Camera [close/low/wide] establishes geography.
+(2-5s) Hero reaction: [hero physically strains, dodges, runs, launches, catches, or redirects]. The environment reacts with [debris/water/light/cloth/smoke] moving in a clear direction.
+(5-9s) Escalation: [threat changes position or speed], [secondary object/person/environment element] moves, and cause -> effect remains readable.
+(9-12s) Decisive reversal/contact: [one unmistakable impact, catch, snap-back, strike, save, or transformation].
+(12-15s) Payoff: the final image is materially different from the opening; [aftermath/position advantage/saved object/fallen threat], final 0.7 seconds hold.
+Camera: motivated scale changes, readable geography, no random spin.
+Guardrail: do not sustain one levitation/force-field/tableau for the whole clip. Show threat -> reaction -> reversal -> changed final state.
+```
+
 ## Product Commercial
 
 ```text

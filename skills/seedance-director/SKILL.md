@@ -27,22 +27,25 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
    - a logged-in Bubio browser session,
    - the bundled Bubio automation runner via `zsh scripts/bubio_runner.sh` if appropriate,
    - another approved Seedance endpoint if the user uses one.
-   - If Bubio is the route and no reusable session exists yet, prompt the user to log into Bubio once, then save and reuse the local session.
+   - If Bubio is the route and no reusable session exists yet, run `zsh scripts/bubio_runner.sh capture-auth` so a visible Chrome login window opens. Tell the user exactly: "Log into Bubio Studio in the Chrome window I opened, then return here and press Enter/reply done." Do not merely say "log in" without opening or identifying the window.
    - If trying to replace browser clicking with direct API calls, run the bundled `discover-api` mode first and base endpoint assumptions on the sanitized local evidence.
 6. Before submitting in Bubio, verify attached refs, aspect ratio, duration, and visible cost. Browser uploads may require copying generated images into the workspace first.
-7. Retrieve/download the result locally, return the video directly in the Codex thread, make a review sheet, and critique the returned artifact.
-8. Decide whether to keep, rerun, regenerate refs, split into shots, or simplify the ask.
+7. After submitting a slow Bubio job, do not burn the whole turn passively watching. Prefer `--submit-only` plus a 5-minute heartbeat/checkpoint when the client supports it; on return, retrieve the result.
+8. Retrieve/download the result locally, return the video directly in the Codex thread, make a review sheet, and critique the returned artifact.
+9. Save a compact run lesson next to the output artifacts, then decide whether to keep, rerun, regenerate refs, split into shots, or simplify the ask.
 
 ## Guardrails
 
 - Do not assume a specific browser profile, tab number, or character overlay unless the user or a separate overlay skill says so.
 - Never ask for or store passwords. Reuse a logged-in browser session or saved local auth state.
 - Do not submit credit-spending jobs unless the user has already authorized generation in that conversation or a standing approval exists.
-- If Bubio authentication is missing or expired, explicitly ask the user to log into Bubio once before generation, then reuse the saved local session on future runs.
+- If Bubio authentication is missing or expired, run the bundled `capture-auth` route so a visible Chrome login window opens, tell the user exactly which opened window to use, then reuse the saved local session on future runs.
 - For branded products or exact package fidelity, treat visible text/logo as an invariant and keep the original product asset involved.
 - Do not assume a whole multi-panel storyboard should be used as `First Frame`; often it should be reference guidance only.
 - Do not treat an old visible Bubio `Render failed` card as the current job. Match failures/downloads to the current prompt, refs, and timestamp.
 - Do not make the user visit Bubio just to see the result. Delivery is thread-first: download the MP4, present it in the thread, then critique it.
+- Do not download or critique a background loop, stale feed video, or old result just because it is the first visible `<video>`. Match the current result by fresh submit state, top/current result card, prompt/timestamp metadata, and signed `/studio/videos/*.mp4` URL.
+- Do not let an action-trailer prompt become a static VFX tableau. If the brief promises action, require visible phase changes: threat motion, character reaction/strain, environment movement, reversal or contact, and a final changed state.
 
 ## References To Load
 
@@ -64,6 +67,7 @@ For a normal execution request, provide:
 - the generated video returned directly in the thread when the interface supports local media display,
 - the generated output path if media was created,
 - the review sheet path or image when available,
+- the saved run lesson path,
 - a short critique with the next improvement move.
 
 For Codex Desktop, return local media with absolute paths, for example:

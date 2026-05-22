@@ -4,4 +4,4 @@ https://github.com/DannyExperiments/seedance-director-kit/tree/main/skills/seeda
 After install, restart Codex.
 
 Then use:
-Use $seedance-director. Take my rough idea, choose the best Seedance strategy, create any needed reference images or storyboard sheets, generate the video through my logged-in Bubio or available Seedance route, retrieve the output, critique it, and tell me the next improvement move. If Bubio is the route and no saved session exists yet, ask me to log in once and then reuse that local session.
+Use $seedance-director. Take my rough idea, choose the best Seedance strategy, create any needed reference images or storyboard sheets, generate the video through my logged-in Bubio or available Seedance route, retrieve/download the MP4, return the video directly in this thread, make a review sheet, critique it, save the run lesson, and tell me the next improvement move. If Bubio is the route and no saved session exists yet, run the Bubio auth-capture route so a visible Chrome window opens, tell me exactly which window to log into, then reuse that local session.

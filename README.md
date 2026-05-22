@@ -6,7 +6,7 @@ It is designed for the workflow:
 
 `rough idea -> strategy choice -> authored stills/storyboard -> Seedance prompt -> Bubio run -> critique -> next move`
 
-The intended user experience is thread-first: Bubio renders the clip, but Codex retrieves the MP4, returns it directly in the conversation, creates a review sheet when possible, and critiques the returned artifact.
+The intended user experience is thread-first: Bubio renders the clip, but Codex retrieves the MP4, returns it directly in the conversation, creates a review sheet when possible, critiques the returned artifact, and saves a compact run lesson.
 
 ## What is in this kit
 
@@ -48,15 +48,16 @@ If the user wants faster Bubio execution, keep this repo available locally and u
 - `tools/bubio_automation/bubio_runner.sh`
 
 The user logs into Bubio once. The runner stores only reusable local auth state, not a password.
-If no saved Bubio session exists yet, Codex should ask the user to log in once and then reuse that saved local session on future runs.
+If no saved Bubio session exists yet, Codex should run `capture-auth` so a visible Chrome login window opens, tell the user which window to use, and then reuse that saved local session on future runs.
 The runner also includes `discover-api`, a non-spending command that records redacted Bubio endpoint structure so future versions can replace more browser clicking with direct CLI/API calls.
+If auth is missing or expired, Codex should run `capture-auth` so a visible Chrome login window opens, then tell the user exactly which opened window to use. It should not merely say "log in" without opening a route.
 
 ## Use
 
 Short invocation:
 
 ```text
-Use $seedance-director. Take my rough idea, choose the best Seedance strategy, create any needed reference images or storyboard sheets, generate the video through my logged-in Bubio or available Seedance route, retrieve/download the MP4, return the video directly in this thread, critique it, and tell me the next improvement move.
+Use $seedance-director. Take my rough idea, choose the best Seedance strategy, create any needed reference images or storyboard sheets, generate the video through my logged-in Bubio or available Seedance route, retrieve/download the MP4, return the video directly in this thread, make a review sheet, critique it, save the run lesson, and tell me the next improvement move.
 ```
 
 The fuller handoff is in:

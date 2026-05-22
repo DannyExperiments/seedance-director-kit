@@ -58,3 +58,17 @@ For high-speed combat, ask Seedance for:
 - and a strong final hold.
 
 Do not try to narrate every strike.
+
+## Action Trailer State Change
+
+Do not mistake a high-quality reference still for a complete action plan. A strong image can make the whole video beautiful, but if the prompt mostly asks Seedance to sustain that image, the result becomes a static VFX tableau.
+
+For action trailers, design the storyboard or reference sequence so the final state is visibly different from the opening:
+
+- the threat moves first,
+- the hero reacts with readable body mechanics,
+- the environment accelerates or breaks,
+- one decisive reversal/contact happens,
+- and the last beat shows a changed world, saved object, fallen threat, or positional advantage.
+
+When one 15-second shot is too much, split the intent into a close hero-strain shot plus a wide payoff shot.

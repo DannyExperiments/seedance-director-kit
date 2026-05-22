@@ -35,8 +35,9 @@ zsh scripts/bubio_runner.sh capture-auth
 zsh scripts/bubio_runner.sh inspect-studio
 zsh scripts/bubio_runner.sh discover-api --headless --observe-ms 15000
 zsh scripts/bubio_runner.sh discover-api --headless --exercise-form --prompt-file "/absolute/path/to/prompt.txt" --ref "/absolute/path/to/ref.png" --aspect 16:9 --duration 15 --observe-ms 15000
-zsh scripts/bubio_runner.sh download-latest --download-name "latest.mp4"
+zsh scripts/bubio_runner.sh download-latest --prompt-file "/absolute/path/to/prompt.txt" --download-name "latest.mp4"
 zsh scripts/bubio_runner.sh generate --prompt-file "/absolute/path/to/prompt.txt" --aspect 16:9 --duration 15 --sound on
+zsh scripts/bubio_runner.sh generate --prompt-file "/absolute/path/to/prompt.txt" --ref "/absolute/path/to/ref.png" --prefix-first-frame --aspect 16:9 --duration 15 --sound on --submit-only
 ```
 
 GitHub ZIP installs may not preserve executable bits on shell scripts, so invoke the runner with `zsh` rather than relying on `./scripts/bubio_runner.sh`.
@@ -56,6 +57,30 @@ Codex Desktop example:
 ![Generated video](/absolute/path/to/result.mp4)
 ![Review sheet](/absolute/path/to/result-review.jpg)
 ```
+
+## Login Flow
+
+If Bubio auth is missing or expired, do not just tell the user to log in. Run:
+
+```zsh
+zsh scripts/bubio_runner.sh capture-auth
+```
+
+That command opens a visible Chrome window. Tell the user: "Log into Bubio Studio in the Chrome window I opened, then return here and press Enter/reply done." Never ask for a password.
+
+## Submit / Heartbeat Flow
+
+For normal quick tests, `generate` can wait for the MP4. For 15s renders or any slow queue, use `--submit-only` after the form is verified. The runner submits once, saves submit evidence, prints the `download-latest` command, and exits.
+
+Then set a 5-minute heartbeat/checkpoint if the client supports it. On return, run the printed `download-latest --prompt-file ...` command, verify the result belongs to the current job, return the MP4 in-thread, create the review sheet, then critique.
+
+## Retrieval Rules
+
+- Prefer fresh signed `/studio/videos/*.mp4` result URLs.
+- Do not trust the first visible `<video>` node; it may be a background loop or stale virtualized feed card.
+- Do not scroll deep into old result history while looking for a fresh render unless the current card is not visible.
+- Match by current prompt, timestamp, top/current result card, and nearby card metadata.
+- If the first retrieved file is the wrong old/background clip, discard it and state that it was not the current result.
 
 ## API Discovery Mode
 
@@ -86,7 +111,7 @@ The output is meant to answer:
 
 Use this checklist when the runner is unavailable, stale, or cannot finish the route:
 
-1. Open Bubio Studio and verify the user is logged in. If not, ask the user to log in once.
+1. Open Bubio Studio and verify the user is logged in. If not, run `capture-auth` so a visible Chrome window opens, then ask the user to log into that opened window once.
 2. Close onboarding overlays or prompt tips that intercept clicks.
 3. Select `Video` and `Seedance 2`.
 4. Copy generated image assets from `~/.codex/generated_images` into a workspace/output folder before file upload.

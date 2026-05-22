@@ -37,6 +37,7 @@ zsh tools/bubio_automation/bubio_runner.sh doctor
 - repeatable generate flow,
 - pull completed signed MP4 URLs quickly,
 - thread-first MP4 return plus review-sheet critique after retrieval.
+- submit-only mode for slow renders, so the agent can set a heartbeat instead of waiting idly.
 
 ## API discovery
 
@@ -62,3 +63,22 @@ zsh tools/bubio_automation/bubio_runner.sh discover-api \
 ```
 
 Use `--exercise-form` carefully with private reference images because uploads may still send files to Bubio storage even though no video generation is submitted.
+
+## Login and heartbeat fixes
+
+If auth is missing or expired, run `capture-auth`. It opens a visible Chrome login window; tell the user to log into that specific opened Bubio Studio window and return.
+
+For slow jobs:
+
+```zsh
+zsh tools/bubio_automation/bubio_runner.sh generate \
+  --prompt-file "/absolute/path/to/prompt.txt" \
+  --ref "/absolute/path/to/ref.png" \
+  --prefix-first-frame \
+  --aspect 16:9 \
+  --duration 15 \
+  --sound on \
+  --submit-only
+```
+
+Then set a 5-minute heartbeat/checkpoint if available. On return, run the printed `download-latest --prompt-file ...` command, verify the result belongs to the current job, return the MP4 in-thread, create the review sheet, critique it, and save a run lesson.

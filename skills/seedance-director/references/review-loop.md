@@ -122,11 +122,13 @@ If generation is slow, do not waste the whole turn waiting idly if a resume/hear
 
 1. prepare the job,
 2. submit,
-3. set a wake-up or checkpoint,
+3. set a 5-minute wake-up or checkpoint when the client supports it,
 4. on return, retrieve the result,
 5. critique it,
 6. store the lesson,
 7. decide whether one more targeted retry is worth it.
+
+If no heartbeat/checkpoint tool exists, poll sparingly. Do not spend 30 minutes actively watching a render page.
 
 ## Lesson Logging
 
@@ -137,3 +139,15 @@ Every finished run should produce one compact lesson:
 - what clearly failed,
 - what to keep constant next time,
 - what single variable to change next.
+
+Save that lesson beside the run artifacts as `lesson.md` or `run-lesson.md`. If the user explicitly asks to update Codex memory, also add an ad-hoc memory note through the memory extension mechanism; do not silently edit private memory files.
+
+## Recent Failure Lesson: Telekinetic Train
+
+The clean-agent telekinetic train test completed technically but under-delivered on action. The generated clip looked polished, with a coherent force dome and neon station, but the hero mostly sustained one levitation tableau. For future disaster/superpower trailers:
+
+- do not let the reference still become the entire clip,
+- include visible threat motion before the hero stabilizes it,
+- include a close hero strain/action beat,
+- include an unmistakable reversal or snap-back moment,
+- end with a changed final state, not simply the same suspended object held longer.

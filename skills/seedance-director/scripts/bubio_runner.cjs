@@ -25,7 +25,7 @@ Usage:
   bubio_runner.sh bootstrap-auth-from-profile [--chrome-profile-dir DIR]
   bubio_runner.sh inspect-studio [--state-file FILE] [--artifact-dir DIR]
   bubio_runner.sh discover-api [--state-file FILE] [--artifact-dir DIR] [--observe-ms N] [--exercise-form]
-  bubio_runner.sh download-latest [--output-dir DIR] [--download-name NAME]
+  bubio_runner.sh download-latest [--output-dir DIR] [--download-name NAME] [--prompt-file FILE|--prompt TEXT]
   bubio_runner.sh generate [options]
 
 Common options:
@@ -51,13 +51,14 @@ Generate options:
   --download-name NAME   Final MP4 filename.
   --prefix-first-frame   Prefix prompt with "Use @ref1 as the exact first frame."
   --dry-run              Fill the form and stop before clicking Generate.
+  --submit-only          Submit the job, save submit evidence, and exit without waiting.
 
 Examples:
   bubio_runner.sh capture-auth
   bubio_runner.sh bootstrap-auth-from-profile --chrome-profile-dir "Default"
   bubio_runner.sh inspect-studio
   bubio_runner.sh discover-api --headless --observe-ms 15000
-  bubio_runner.sh download-latest --download-name latest.mp4
+  bubio_runner.sh download-latest --prompt-file prompt.txt --download-name latest.mp4
   bubio_runner.sh generate --prompt-file prompt.txt --aspect 16:9 --duration 15 --sound on
   bubio_runner.sh generate --prompt "..." --ref frame.png --prefix-first-frame
 `);
@@ -95,7 +96,7 @@ function parseArgs(argv) {
       continue;
     }
     const key = token.slice(2);
-    if (["headed", "headless", "prefix-first-frame", "help", "dry-run", "exercise-form"].includes(key)) {
+    if (["headed", "headless", "prefix-first-frame", "help", "dry-run", "exercise-form", "submit-only"].includes(key)) {
       options[key] = true;
       continue;
     }
@@ -158,21 +159,26 @@ function detectLikelyChromeProfileDir() {
   return profileDirs[0] || "Default";
 }
 
-function readPrompt(options) {
+function readOptionalPrompt(options) {
   let prompt = options.prompt || "";
   if (options["prompt-file"]) {
     const promptPath = path.resolve(expandHome(options["prompt-file"]));
     prompt = fs.readFileSync(promptPath, "utf8");
   }
   prompt = prompt.trim();
-  if (!prompt) {
-    fail("No prompt provided. Use --prompt or --prompt-file.");
-  }
-  if (options["prefix-first-frame"]) {
+  if (prompt && options["prefix-first-frame"]) {
     const prefix = "Use @ref1 as the exact first frame.";
     if (!prompt.toLowerCase().includes(prefix.toLowerCase())) {
       prompt = `${prefix}\n\n${prompt}`;
     }
+  }
+  return prompt;
+}
+
+function readPrompt(options) {
+  const prompt = readOptionalPrompt(options);
+  if (!prompt) {
+    fail("No prompt provided. Use --prompt or --prompt-file.");
   }
   return prompt;
 }
@@ -209,6 +215,18 @@ function waitForEnter(message) {
       resolve();
     });
   });
+}
+
+function authRecoveryMessage(stateFile) {
+  const scriptPath = path.join(__dirname, "bubio_runner.sh");
+  const statePart = stateFile ? ` --state-file "${stateFile}"` : "";
+  return [
+    "Bubio is logged out or the saved session expired.",
+    "Run this exact command; it opens a visible Chrome window:",
+    `zsh "${scriptPath}" capture-auth${statePart}`,
+    "Log into Bubio Studio in that opened Chrome window, return to the terminal, and press Enter to save the session.",
+    "Then rerun the generation command.",
+  ].join("\n");
 }
 
 function sleep(ms) {
@@ -622,16 +640,16 @@ async function enterVideoModeIfNeeded(page) {
   }
 }
 
-async function ensureLoggedIn(page) {
+async function ensureLoggedIn(page, stateFile) {
   const url = page.url();
   if (/login|signin|auth/i.test(url)) {
-    fail("Bubio is showing a login flow. Run capture-auth first.");
+    fail(authRecoveryMessage(stateFile));
   }
   await enterComposerIfNeeded(page);
   await enterVideoModeIfNeeded(page);
   const ready = await studioLooksReady(page);
   if (!ready) {
-    fail("Bubio studio did not look ready. Session may be expired.");
+    fail(authRecoveryMessage(stateFile));
   }
 }
 
@@ -678,18 +696,33 @@ async function ensureModel(page, desiredModel) {
   if (!desiredModel) {
     return;
   }
-  const exactButton = page.getByRole("button", { name: new RegExp(escapeRegex(desiredModel), "i") }).first();
-  if (await exactButton.isVisible().catch(() => false)) {
-    return;
+  const modelButtons = page.locator("button").filter({
+    hasText: /Seedance|Kling|Sora|Veo|Runway|PixVerse|Hailuo|Luma/i,
+  });
+  const count = await modelButtons.count().catch(() => 0);
+  let likelyCurrentModel = null;
+  for (let i = 0; i < count; i += 1) {
+    const candidate = modelButtons.nth(i);
+    if (!(await candidate.isVisible().catch(() => false))) {
+      continue;
+    }
+    const box = await candidate.boundingBox().catch(() => null);
+    if (box && box.y > 800) {
+      likelyCurrentModel = candidate;
+      break;
+    }
+  }
+  if (!likelyCurrentModel && count > 0) {
+    likelyCurrentModel = modelButtons.first();
   }
 
-  const likelyCurrentModel = page.locator("button").filter({
-    hasText: /Seedance|Kling|Sora|Veo|Runway|PixVerse|Hailuo|Luma/i,
-  }).first();
-
-  if (await likelyCurrentModel.isVisible().catch(() => false)) {
+  if (likelyCurrentModel && await likelyCurrentModel.isVisible().catch(() => false)) {
+    const currentText = ((await likelyCurrentModel.innerText().catch(() => "")) || "").trim();
+    if (currentText.toLowerCase().includes(desiredModel.toLowerCase())) {
+      return;
+    }
     await likelyCurrentModel.click({ force: true }).catch(() => {});
-    await sleep(500);
+    await sleep(700);
   }
 
   const picked = await maybeSelectButton(page, desiredModel);
@@ -711,18 +744,62 @@ async function ensureAspect(page, desiredAspect) {
   if (!desiredAspect) {
     return;
   }
-  const current = page.getByRole("button", { name: /^(1:1|16:9|9:16|4:3|3:4|21:9|9:21)$/ }).first();
-  if (await current.isVisible().catch(() => false)) {
-    const currentText = (await current.innerText().catch(() => "")).trim();
-    if (currentText === desiredAspect) {
-      return;
+  async function findCurrentAspectButton() {
+    const aspectButtons = page.getByRole("button", { name: /^(1:1|16:9|9:16|4:3|3:4|21:9|9:21)$/ });
+    const count = await aspectButtons.count().catch(() => 0);
+    for (let i = 0; i < count; i += 1) {
+      const candidate = aspectButtons.nth(i);
+      if (!(await candidate.isVisible().catch(() => false))) {
+        continue;
+      }
+      const box = await candidate.boundingBox().catch(() => null);
+      if (box && box.y > 800 && box.width < 120) {
+        return candidate;
+      }
     }
-    await current.click();
-    await sleep(250);
-    const picked = await maybeSelectButton(page, desiredAspect);
-    if (!picked) {
-      fail(`Could not select aspect ratio ${desiredAspect}.`);
+    return null;
+  }
+
+  const current = await findCurrentAspectButton();
+  if (!current) {
+    return;
+  }
+  const currentText = (await current.innerText().catch(() => "")).trim();
+  if (currentText === desiredAspect) {
+    return;
+  }
+  const currentBox = await current.boundingBox().catch(() => null);
+  await current.click({ force: true });
+  await sleep(250);
+
+  const optionButtons = page.locator("button");
+  const optionCount = await optionButtons.count().catch(() => 0);
+  let option = null;
+  for (let i = 0; i < optionCount; i += 1) {
+    const candidate = optionButtons.nth(i);
+    if (!(await candidate.isVisible().catch(() => false))) {
+      continue;
     }
+    const text = ((await candidate.innerText().catch(() => "")) || "").trim();
+    if (text !== desiredAspect) {
+      continue;
+    }
+    const box = await candidate.boundingBox().catch(() => null);
+    if (box && box.width > 100 && (!currentBox || box.y < currentBox.y + 20)) {
+      option = candidate;
+      break;
+    }
+  }
+  if (!option) {
+    fail(`Could not select aspect ratio ${desiredAspect}.`);
+  }
+  await option.click({ force: true });
+  await sleep(300);
+
+  const verified = await findCurrentAspectButton();
+  const verifiedText = verified ? (await verified.innerText().catch(() => "")).trim() : "";
+  if (verifiedText !== desiredAspect) {
+    fail(`Aspect ratio verification failed: expected ${desiredAspect}, found ${verifiedText || "unknown"}.`);
   }
 }
 
@@ -764,9 +841,9 @@ async function ensureDuration(page, desiredDuration) {
       return;
     }
     if (current < target) {
-      await plusButton.click();
+      await plusButton.click({ force: true });
     } else {
-      await minusButton.click();
+      await minusButton.click({ force: true });
     }
     await sleep(150);
   }
@@ -785,7 +862,7 @@ async function ensureSound(page, desiredSound) {
   const wantOn = desiredSound.trim().toLowerCase() === "on";
   const isOn = currentText.includes("on");
   if (wantOn !== isOn) {
-    await current.click();
+    await current.click({ force: true });
   }
 }
 
@@ -871,60 +948,156 @@ async function clickTopDownload(page) {
   return false;
 }
 
-async function getLatestVideoUrlFromPage(page) {
-  const urls = await page.evaluate(() => {
+function isStudioResultVideoUrl(url) {
+  return /\/studio\/videos\/.+\.mp4/i.test(url);
+}
+
+function promptMatchScore(text, prompt) {
+  if (!text || !prompt) {
+    return 0;
+  }
+  const normalizedText = text.toLowerCase();
+  const words = Array.from(new Set(
+    prompt.toLowerCase()
+      .replace(/[^a-z0-9\s-]+/g, " ")
+      .split(/\s+/)
+      .filter((word) => word.length >= 6)
+      .slice(0, 80),
+  ));
+  let score = 0;
+  for (const word of words) {
+    if (normalizedText.includes(word)) {
+      score += 1;
+    }
+  }
+  return score;
+}
+
+function rankVideoCandidates(candidates, prompt) {
+  return candidates.slice().sort((a, b) => {
+    const promptDiff = promptMatchScore(b.cardText, prompt) - promptMatchScore(a.cardText, prompt);
+    if (promptDiff !== 0) {
+      return promptDiff;
+    }
+    const visibleDiff = Number(b.visible) - Number(a.visible);
+    if (visibleDiff !== 0) {
+      return visibleDiff;
+    }
+    const areaDiff = (b.area || 0) - (a.area || 0);
+    if (areaDiff !== 0) {
+      return areaDiff;
+    }
+    const yDiff = (a.y ?? 999999) - (b.y ?? 999999);
+    if (yDiff !== 0) {
+      return yDiff;
+    }
+    return (a.x ?? 999999) - (b.x ?? 999999);
+  });
+}
+
+async function getStudioVideoCandidatesFromPage(page) {
+  const candidates = await page.evaluate(() => {
+    function cleanUrl(url) {
+      return (url || "").replace(/#t=.*$/i, "");
+    }
+
+    function nodeUrl(node) {
+      if ("currentSrc" in node && node.currentSrc) {
+        return cleanUrl(node.currentSrc);
+      }
+      return cleanUrl(node.src || "");
+    }
+
+    function hostVideoNode(node) {
+      if (node.tagName && node.tagName.toLowerCase() === "source" && node.parentElement) {
+        return node.parentElement;
+      }
+      return node;
+    }
+
+    function visibleData(node) {
+      const host = hostVideoNode(node);
+      const rect = host.getBoundingClientRect();
+      const style = window.getComputedStyle(host);
+      const visible = rect.width > 80 && rect.height > 80 && style.visibility !== "hidden" && style.display !== "none";
+      return {
+        x: Math.round(rect.x),
+        y: Math.round(rect.y),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        area: Math.round(rect.width * rect.height),
+        visible,
+      };
+    }
+
+    function surroundingText(node) {
+      let current = hostVideoNode(node);
+      let best = "";
+      for (let i = 0; i < 8 && current; i += 1) {
+        const text = ((current.innerText || current.textContent || "")).replace(/\s+/g, " ").trim();
+        if (text.length > best.length) {
+          best = text.slice(0, 1600);
+        }
+        current = current.parentElement;
+      }
+      return best;
+    }
+
     return Array.from(document.querySelectorAll("video, source"))
       .map((node) => {
-        if ("currentSrc" in node && node.currentSrc) {
-          return node.currentSrc;
-        }
-        return node.src || "";
+        return {
+          url: nodeUrl(node),
+          cardText: surroundingText(node),
+          ...visibleData(node),
+        };
       })
-      .filter(Boolean);
+      .filter((candidate) => candidate.url);
   });
-  const signedStudioVideo = urls.find((url) => /\/studio\/videos\/.+\.mp4/i.test(url));
+
+  const unique = new Map();
+  for (const candidate of candidates) {
+    if (!isStudioResultVideoUrl(candidate.url)) {
+      continue;
+    }
+    if (!unique.has(candidate.url)) {
+      unique.set(candidate.url, candidate);
+    }
+  }
+  return Array.from(unique.values());
+}
+
+async function getLatestVideoUrlFromPage(page, prompt) {
+  const candidates = rankVideoCandidates(await getStudioVideoCandidatesFromPage(page), prompt);
+  const signedStudioVideo = candidates[0];
   if (!signedStudioVideo) {
     return null;
   }
-  return signedStudioVideo.replace(/#t=.*$/i, "");
+  return signedStudioVideo.url;
 }
 
 async function getStudioVideoUrlsFromPage(page) {
-  const urls = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll("video, source"))
-      .map((node) => {
-        if ("currentSrc" in node && node.currentSrc) {
-          return node.currentSrc;
-        }
-        return node.src || "";
-      })
-      .filter(Boolean)
-      .map((url) => url.replace(/#t=.*$/i, ""));
-  });
-  return Array.from(new Set(urls.filter((url) => /\/studio\/videos\/.+\.mp4/i.test(url))));
+  const candidates = await getStudioVideoCandidatesFromPage(page);
+  return Array.from(new Set(candidates.map((candidate) => candidate.url)));
 }
 
 async function nudgeResultViewport(page, attempt) {
-  const mode = attempt % 4;
-  if (mode === 0) {
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
-  } else if (mode === 1) {
-    await page.evaluate(() => window.scrollBy(0, -window.innerHeight * 0.6)).catch(() => {});
-  } else if (mode === 2) {
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.4)).catch(() => {});
+  if (attempt < 45) {
+    await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
+  } else if (attempt % 2 === 0) {
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.25)).catch(() => {});
   } else {
     await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
   }
 }
 
-async function waitForFreshVideoUrl(page, previousUrls, timeoutMs) {
+async function waitForFreshVideoUrl(page, previousUrls, timeoutMs, prompt) {
   const start = Date.now();
   let attempt = 0;
   while (Date.now() - start < timeoutMs) {
-    const urls = await getStudioVideoUrlsFromPage(page);
-    const fresh = urls.find((url) => !previousUrls.has(url));
+    const candidates = rankVideoCandidates(await getStudioVideoCandidatesFromPage(page), prompt);
+    const fresh = candidates.find((candidate) => !previousUrls.has(candidate.url));
     if (fresh) {
-      return fresh;
+      return fresh.url;
     }
     await nudgeResultViewport(page, attempt);
     attempt += 1;
@@ -988,7 +1161,7 @@ async function runCaptureAuth(options) {
     await waitForEnter("> Press Enter to save the authenticated session ");
     await page.goto(BUBIO_STUDIO_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle").catch(() => {});
-    await ensureLoggedIn(page);
+    await ensureLoggedIn(page, stateFile);
     await context.storageState({ path: stateFile });
     lockFile(stateFile);
     console.log(`Saved Bubio session to ${stateFile}`);
@@ -1066,7 +1239,7 @@ async function runBootstrapAuthFromProfile(options) {
       await page.goto(BUBIO_STUDIO_URL, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle").catch(() => {});
     }
-    await ensureLoggedIn(page);
+    await ensureLoggedIn(page, stateFile);
     await context.storageState({ path: stateFile });
     lockFile(stateFile);
     console.log(`Saved Bubio session to ${stateFile}`);
@@ -1085,7 +1258,7 @@ async function runInspectStudio(options) {
     outputDir: artifactDir,
   });
   try {
-    await ensureLoggedIn(page);
+    await ensureLoggedIn(page, stateFile);
     logStep("Collecting visible button labels and screenshot");
     const buttons = page.getByRole("button");
     const count = await buttons.count();
@@ -1137,7 +1310,7 @@ async function runDiscoverApi(options) {
     await page.goto(BUBIO_STUDIO_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle").catch(() => {});
     logStep("Checking Bubio auth state");
-    await ensureLoggedIn(page);
+    await ensureLoggedIn(page, stateFile);
     if (options["exercise-form"]) {
       logStep("Exercising prompt/settings/upload controls without submitting generation");
       if (options.prompt || options["prompt-file"]) {
@@ -1199,6 +1372,7 @@ async function runDiscoverApi(options) {
 async function runDownloadLatest(options) {
   const stateFile = path.resolve(expandHome(options["state-file"] || DEFAULT_STATE_FILE));
   const outputDir = path.resolve(expandHome(options["output-dir"] || DEFAULT_OUTPUT_DIR));
+  const prompt = readOptionalPrompt(options);
   ensureSecureDir(outputDir);
   const { browser, context, page } = await launchContext({
     stateFile,
@@ -1207,9 +1381,9 @@ async function runDownloadLatest(options) {
   });
   try {
     logStep("Checking Bubio auth state");
-    await ensureLoggedIn(page);
+    await ensureLoggedIn(page, stateFile);
     logStep("Resolving newest signed video URL from the page");
-    const videoUrl = await getLatestVideoUrlFromPage(page);
+    const videoUrl = await getLatestVideoUrlFromPage(page, prompt);
     if (!videoUrl) {
       fail("Could not find a signed studio video URL on the page.");
     }
@@ -1225,7 +1399,7 @@ async function runDownloadLatest(options) {
 async function runGenerate(options) {
   const stateFile = path.resolve(expandHome(options["state-file"] || DEFAULT_STATE_FILE));
   if (!fs.existsSync(stateFile)) {
-    fail(`Missing auth state file: ${stateFile}. Run capture-auth first.`);
+    fail(authRecoveryMessage(stateFile));
   }
   const outputDir = path.resolve(expandHome(options["output-dir"] || DEFAULT_OUTPUT_DIR));
   const prompt = readPrompt(options);
@@ -1242,22 +1416,14 @@ async function runGenerate(options) {
 
   try {
     logStep("Checking Bubio auth state");
-    await ensureLoggedIn(page);
+    await ensureLoggedIn(page, stateFile);
     const previousVideoUrls = new Set(await getStudioVideoUrlsFromPage(page));
     const beforeDownloads = await page.getByText("Download", { exact: true }).count().catch(() => 0);
 
     logStep("Filling prompt");
     await fillPrompt(page, prompt);
-    logStep(`Selecting model: ${options.model || "Seedance 2"}`);
-    await ensureModel(page, options.model || "Seedance 2");
     logStep(`Selecting mode: ${options.mode || "Create"}`);
     await ensureMode(page, options.mode || "Create");
-    logStep(`Selecting aspect: ${options.aspect || "unchanged"}`);
-    await ensureAspect(page, options.aspect);
-    logStep(`Selecting duration: ${options.duration || "unchanged"}`);
-    await ensureDuration(page, options.duration);
-    logStep(`Selecting sound: ${options.sound || "unchanged"}`);
-    await ensureSound(page, options.sound);
 
     if (refs.length > 0) {
       logStep(`Attaching ${refs.length} reference file(s)`);
@@ -1267,6 +1433,15 @@ async function runGenerate(options) {
       }
       await sleep(1500);
     }
+
+    logStep(`Selecting model: ${options.model || "Seedance 2"}`);
+    await ensureModel(page, options.model || "Seedance 2");
+    logStep(`Selecting aspect: ${options.aspect || "unchanged"}`);
+    await ensureAspect(page, options.aspect);
+    logStep(`Selecting duration: ${options.duration || "unchanged"}`);
+    await ensureDuration(page, options.duration);
+    logStep(`Selecting sound: ${options.sound || "unchanged"}`);
+    await ensureSound(page, options.sound);
 
     if (options["dry-run"]) {
       const dryRunShot = path.join(outputDir, `bubio-dry-run-${Date.now()}.png`);
@@ -1283,15 +1458,43 @@ async function runGenerate(options) {
     logStep("Submitting Bubio generation");
     await generateText.click();
 
+    if (options["submit-only"]) {
+      const submitTimestamp = Date.now();
+      const submitShot = path.join(outputDir, `bubio-submit-${submitTimestamp}.png`);
+      const submitState = path.join(outputDir, `bubio-submit-${submitTimestamp}.json`);
+      const promptFileForResume = options["prompt-file"]
+        ? path.resolve(expandHome(options["prompt-file"]))
+        : path.join(outputDir, `bubio-submit-${submitTimestamp}-prompt.txt`);
+      if (!options["prompt-file"]) {
+        fs.writeFileSync(promptFileForResume, `${prompt}\n`);
+      }
+      await sleep(3000);
+      await page.screenshot({ path: submitShot, fullPage: true }).catch(() => {});
+      fs.writeFileSync(submitState, `${JSON.stringify({
+        submittedAt: new Date().toISOString(),
+        studioUrl: BUBIO_STUDIO_URL,
+        outputDir,
+        downloadName: options["download-name"] || null,
+        promptFileForResume,
+        previousVideoUrlCount: previousVideoUrls.size,
+        note: "Submit-only mode: generation was clicked, but this runner intentionally exited before waiting for the MP4.",
+      }, null, 2)}\n`);
+      console.log(`Submit-only complete. Saved screenshot: ${submitShot}`);
+      console.log(`Submit-only state: ${submitState}`);
+      console.log("Set a 5-minute heartbeat/checkpoint. On return, run:");
+      console.log(`zsh "${path.join(__dirname, "bubio_runner.sh")}" download-latest --output-dir "${outputDir}" --prompt-file "${promptFileForResume}"${options["download-name"] ? ` --download-name "${options["download-name"]}"` : ""}`);
+      return;
+    }
+
     logStep("Waiting for a fresh signed result URL");
-    let freshVideoUrl = await waitForFreshVideoUrl(page, previousVideoUrls, timeoutMs);
+    let freshVideoUrl = await waitForFreshVideoUrl(page, previousVideoUrls, timeoutMs, prompt);
     if (!freshVideoUrl) {
       logStep("Fresh result URL not detected yet; falling back to download-count signal");
       const sawNewDownload = await waitForFreshDownloadTarget(page, beforeDownloads, timeoutMs);
       if (!sawNewDownload) {
         fail("Timed out waiting for a new downloadable result.");
       }
-      freshVideoUrl = await waitForFreshVideoUrl(page, previousVideoUrls, 30000);
+      freshVideoUrl = await waitForFreshVideoUrl(page, previousVideoUrls, 30000, prompt);
     }
     if (!freshVideoUrl) {
       fail("A new result appeared, but no fresh signed studio video URL was detected.");

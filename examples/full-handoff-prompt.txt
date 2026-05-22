@@ -12,10 +12,13 @@ Take my rough idea and do the full creative pipeline:
 7. return the video directly in this thread so I do not need to open Bubio,
 8. create and return a review sheet when possible,
 9. critique the returned output using identity, motion, camera, realism, prompt following, ending, and artifacts,
-10. tell me the single best next improvement.
+10. save a compact run lesson beside the output artifacts,
+11. tell me the single best next improvement.
 
 Default to using at least one authored image for serious work unless this is explicitly a prompt-only baseline test.
 
-If Bubio is the route and no reusable local session exists yet, ask me to log into Bubio once, then save and reuse that local session for future runs.
+If Bubio is the route and no reusable local session exists yet, open the Bubio auth route first, then tell me exactly which opened Chrome window to log into. Do not just say "log in" without opening or identifying the window. Save and reuse that local session for future runs.
+
+If the render is slow, submit once and set a 5-minute heartbeat/checkpoint when available instead of passively waiting for the whole render.
 
 Do not assume any specific personal character, browser profile, or private overlay unless I give one.

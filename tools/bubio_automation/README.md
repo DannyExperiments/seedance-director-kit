@@ -8,6 +8,7 @@ This is a small Playwright-based fast path for Bubio video generation. It is mea
 4. submit a generation and save the finished MP4
 5. pull the latest finished MP4 directly when needed
 6. print thread-delivery Markdown and a review-sheet command after an MP4 is saved
+7. submit slow jobs without waiting, so the agent can resume on a heartbeat
 
 ## Why this exists
 
@@ -52,6 +53,8 @@ zsh ./bubio_runner.sh capture-auth
 ```
 
 After Bubio studio is ready in the opened Chrome window, come back to the terminal and press Enter.
+
+If an agent discovers that Bubio is logged out, it should run this command so the window opens, then tell the user exactly: "Log into Bubio Studio in the Chrome window I opened, then return and press Enter." It should not merely say "log in" without opening a route.
 
 ### 1b. Bootstrap auth from your existing Chrome profile
 
@@ -111,7 +114,7 @@ Use this carefully with private reference images because uploads may still send 
 Useful when a video has already rendered in Bubio and you just want the MP4 quickly:
 
 ```zsh
-zsh ./bubio_runner.sh download-latest --download-name "latest.mp4"
+zsh ./bubio_runner.sh download-latest --prompt-file "/absolute/path/to/prompt.txt" --download-name "latest.mp4"
 ```
 
 After saving an MP4, the runner prints:
@@ -145,6 +148,21 @@ zsh ./bubio_runner.sh generate \
   --sound on
 ```
 
+Slow-render submit-only example:
+
+```zsh
+zsh ./bubio_runner.sh generate \
+  --prompt-file "/absolute/path/to/prompt.txt" \
+  --ref "/absolute/path/to/frame.png" \
+  --prefix-first-frame \
+  --aspect 16:9 \
+  --duration 15 \
+  --sound on \
+  --submit-only
+```
+
+`--submit-only` clicks Generate once, saves submit evidence, prints the safer follow-up `download-latest --prompt-file ...` command, and exits. Use it with a 5-minute heartbeat/checkpoint when the agent environment supports one.
+
 ## Current v1 limits
 
 This version is intentionally narrow and honest:
@@ -156,6 +174,7 @@ This version is intentionally narrow and honest:
 - uses prompt steering for first-frame behavior via `--prefix-first-frame`
 - downloads are now pulled from Bubio's signed `studio/videos/*.mp4` result URL instead of relying on the hover-only UI download button
 - after MP4 retrieval, prints thread-return Markdown and a review-sheet command
+- `--submit-only` supports slow renders without a long passive wait
 
 What still needs a second pass:
 

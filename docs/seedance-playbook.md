@@ -45,9 +45,11 @@ Be careful with:
 3. author the stills,
 4. write the Seedance prompt,
 5. submit,
-6. retrieve,
-7. critique,
-8. change one variable at a time.
+6. set a heartbeat/checkpoint instead of passively waiting when the render is slow,
+7. retrieve and return the MP4 in-thread,
+8. critique,
+9. save a run lesson,
+10. change one variable at a time.
 
 ## Strategy Choices
 
@@ -87,3 +89,18 @@ Strong Seedance work tends to cluster into:
 6. restrained drama and emotional realism.
 
 Prompt architecture should match the bucket.
+
+## Action Trailer Lesson
+
+For action trailers, visual quality is not enough. A polished 15s clip can still fail if nothing changes. Avoid prompts where the subject simply holds a force field, levitates an object, stares down a threat, or sustains a pose for the whole runtime.
+
+Require:
+
+- immediate threat motion,
+- hero physical reaction,
+- environment displacement,
+- escalation,
+- decisive reversal/contact,
+- final changed state.
+
+If the concept is a superpower rescue or disaster stop, use a closer hero strain shot plus a wide payoff, or split into two clips. One wide first-frame tableau often creates a beautiful but static video.
