@@ -8,6 +8,8 @@
 - Keep one dominant action per shot.
 - Use setup -> trigger -> escalation -> payoff for most 15-second clips.
 - For action/trailer asks, every timed beat must visibly change the situation. Avoid a beautiful held tableau where the subject simply sustains the same effect for 15 seconds.
+- For I2V, keep text lean. Let the image carry identity, composition, wardrobe, product design, and style; use text for motion, camera, environment reaction, sound, and ending. Overlong I2V prompts can erode image authority.
+- Do not re-describe a character's face/body when a reference is attached unless the user is asking for a transformation. Bind the ref and describe what that subject does.
 - Add physical anchors: rain, dust, sparks, debris, cloth delay, reflections, smoke, bubbles, wake rings, drifting particles.
 - Avoid asking for readable in-world text unless the text itself is the target artifact.
 
@@ -56,6 +58,21 @@ Use @ref1 as [first frame/reference] and preserve [core subject/world/style]. If
 (12-15s) Payoff: the final image is materially different from the opening; [aftermath/position advantage/saved object/fallen threat], final 0.7 seconds hold.
 Camera: motivated scale changes, readable geography, no random spin.
 Guardrail: do not sustain one levitation/force-field/tableau for the whole clip. Show threat -> reaction -> reversal -> changed final state.
+```
+
+## High-Motion Action Core
+
+Use this as a reusable suffix or middle block when the clip must feel alive, not merely beautiful.
+
+```text
+ACTION MOTION CORE
+Momentum chain only: each movement causes the next movement.
+Visible displacement every 2 to 3 seconds: body, threat, camera, debris, crowd, vehicle, weapon, water, sparks, or architecture must change position.
+Clear positioning at all times: hero and threat stay in each other's eyeline, no teleporting, no random side-switch.
+Environment participates: surfaces crack, dust trails, fabric/hair lag by about 2 frames, loose objects slide or lift in the direction of force.
+Impact language: one strong contact or reversal uses a 2-frame hold, brightness spike, micro shake, then resumes motion.
+Rhythm: fast exchange, micro pause, one short slow-motion beat only if it makes the contact readable.
+Ending: final frame is materially different from the first frame and gives the hero or subject a clear positional advantage.
 ```
 
 ## Product / Commercial Architecture
@@ -122,15 +139,29 @@ RULES
 - Environment reacts visibly.
 IMPACT
 Strong contacts: 2-frame hold + brightness spike + micro shake resume.
+MOTION
+Secondary delay about 2 frames on hair, fabric, smoke, particles, hanging objects, and loose debris.
 RHYTHM
 Fast exchanges + micro pauses + 1 to 2 slow-motion beats.
 ESCALATION
 Include one vertical/environment-driven move and one decisive high-impact action.
 HERO MOMENT
-One standout finishing beat with strong silhouette or positional advantage.
+One standout finishing beat: readable full-body motion, environment or weapon used logically, slow-motion entry -> sharp impact -> brief aftermath hold, ending with strong silhouette or positional advantage.
 GUARDRAILS
 No teleporting. Respect weight and inertia. Clear cause and effect. Prioritize clarity over complexity.
 ```
+
+## Multi-Shot Action Structure
+
+If one 15s clip becomes clunky or static, split the concept into small I2V shots and stitch later:
+
+```text
+SHOT 1 / 5s: @ref1 as first frame. Establish threat already moving. One camera move. End before impact.
+SHOT 2 / 5s: @ref1 as first frame. Close hero strain/reaction. One dominant action. End on release/contact setup.
+SHOT 3 / 5s: @ref1 as first frame. Wide payoff. One decisive reversal/contact. End on changed final state.
+```
+
+Run shots in parallel when using an API route. This often beats forcing setup, emotion, impact, and aftermath into one generation.
 
 ## Storyboard Translation Notes
 

@@ -30,6 +30,21 @@ Camera: motivated scale changes, readable geography, no random spin.
 Guardrail: do not sustain one levitation/force-field/tableau for the whole clip. Show threat -> reaction -> reversal -> changed final state.
 ```
 
+## High-Motion Action Core
+
+Drop this into action, fight, chase, sport, superpower, disaster, or VFX prompts when the risk is a pretty but static clip.
+
+```text
+ACTION MOTION CORE
+Momentum chain only: each movement causes the next movement.
+Visible displacement every 2 to 3 seconds: body, threat, camera, debris, crowd, vehicle, weapon, water, sparks, or architecture must change position.
+Clear positioning at all times: hero and threat stay in each other's eyeline, no teleporting, no random side-switch.
+Environment participates: surfaces crack, dust trails, fabric/hair lag by about 2 frames, loose objects slide or lift in the direction of force.
+Impact language: one strong contact or reversal uses a 2-frame hold, brightness spike, micro shake, then resumes motion.
+Rhythm: fast exchange, micro pause, one short slow-motion beat only if it makes the contact readable.
+Ending: final frame is materially different from the first frame and gives the hero or subject a clear positional advantage.
+```
+
 ## Product Commercial
 
 ```text
@@ -75,12 +90,32 @@ RULES
 - Clear positioning at all times
 - Continuous motivated camera
 - Environment actively reacts
+IMPACT
+Strong contacts: 2-frame hold + brightness spike + micro shake resume.
+MOTION
+Secondary delay about 2 frames on hair, fabric, smoke, particles, hanging objects, and loose debris.
+RHYTHM
+Fast exchanges + micro pauses + 1 to 2 slow-motion beats.
+ESCALATION
+Include one vertical/environment-driven move and one decisive high-impact action.
 HERO MOMENT
-One standout finishing beat with strong silhouette or positional advantage.
+One standout finishing beat with readable full-body motion, environment or weapon used logically, slow-motion entry -> sharp impact -> brief aftermath hold, and strong silhouette or positional advantage.
+GUARDRAILS
+No teleporting. Respect weight and inertia. Clear cause and effect. Prioritize clarity over complexity.
 ```
 
 ## I2V Short Form
 
 ```text
 Use @ref1 as the exact first frame. [duration] continuous shot: [environment continues from @ref1] as the camera [one motivated move]. [Subject from @ref1] [one action], causing [environment reaction]. End on [specific final composition] with a final 0.7 seconds hold.
+```
+
+## Three-Shot Action Split
+
+Use when a 15s single shot keeps becoming static or clunky.
+
+```text
+SHOT 1 / 5s: @ref1 as first frame. Establish threat already moving. One camera move. End before impact.
+SHOT 2 / 5s: @ref1 as first frame. Close hero strain/reaction. One dominant action. End on release/contact setup.
+SHOT 3 / 5s: @ref1 as first frame. Wide payoff. One decisive reversal/contact. End on changed final state.
 ```

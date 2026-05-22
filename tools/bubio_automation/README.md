@@ -10,6 +10,7 @@ This is a small Playwright-based fast path for Bubio video generation. It is mea
 6. print thread-delivery Markdown and a review-sheet command after an MP4 is saved
 7. submit slow jobs without waiting, so the agent can resume on a heartbeat
 8. refuse prompt-unmatched stale/background MP4s by default
+9. score local motion amplitude so action clips do not pass review as beautiful static tableaus
 
 ## Why this exists
 
@@ -124,6 +125,14 @@ After saving an MP4, the runner prints:
 - a `make_review_sheet.sh` command,
 - and the Markdown review-sheet embed to use after the sheet exists.
 
+For action/trailer/fight/chase/disaster/superpower clips, run the motion gate too:
+
+```zsh
+zsh ./analyze_motion.sh "/absolute/path/to/output.mp4" "/absolute/path/to/output-motion.json"
+```
+
+Treat `static` or `weak` as a rerun warning unless the user explicitly asked for a held beauty shot.
+
 ### 5. Generate and download
 
 Text-only example:
@@ -178,6 +187,7 @@ This version is intentionally narrow and honest:
 - candidate-debug JSON and pre-submit evidence are saved to help diagnose retrieval mistakes
 - after MP4 retrieval, prints thread-return Markdown and a review-sheet command
 - `--submit-only` supports slow renders without a long passive wait
+- `analyze_motion.sh` provides a local review gate for low-motion action outputs
 
 What still needs a second pass:
 

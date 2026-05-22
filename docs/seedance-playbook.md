@@ -106,3 +106,30 @@ Require:
 - final changed state.
 
 If the concept is a superpower rescue or disaster stop, use a closer hero strain shot plus a wide payoff, or split into two clips. One wide first-frame tableau often creates a beautiful but static video.
+
+## Motion Quality Gate
+
+After rendering an action/trailer/fight/chase/disaster/superpower clip, run the local analyzer before final critique:
+
+```zsh
+zsh skills/seedance-director/scripts/analyze_motion.sh output.mp4 output-motion.json
+```
+
+This measures frame-to-frame displacement from a downsampled version of the MP4. It cannot tell whether the story is good, but it catches the common failure where the clip is visually expensive and nearly motionless.
+
+Use the verdict this way:
+
+- `static` or `weak`: do not call an action clip successful unless the user asked for a held beauty shot.
+- `moderate`: review manually; slow-motion action may live here.
+- `strong`: motion exists, but still judge identity, geography, physics, and hero moment.
+
+The fix for a low-motion action clip is not "add more adjectives." The fix is a stronger action design: visible displacement every 2 to 3 seconds, environment reaction, one decisive contact/reversal, and a final frame that is materially different from the first.
+
+## Pipeline Notes From API/I2V Work
+
+- I2V works best when the prompt starts with `@Image1 as the first frame` or the current route's equivalent, such as `@ref1 as the exact first frame`.
+- For I2V, keep prompts short. The image carries identity and composition; text carries action, camera, environment reaction, sound, and ending.
+- Do not re-describe the referenced character's face/body unless the job is a transformation. Re-description can make the model reconstruct identity from text instead of trusting the image.
+- For dialogue, isolate one speaker per shot and prefer medium framing. Multi-person lip sync is unreliable.
+- For longer pieces, generate small shotlets from strong still frames and stitch. A multi-shot pipeline often beats one overloaded 15s prompt.
+- With multiple references, put the most important anchor first and include a ref map in the prompt.

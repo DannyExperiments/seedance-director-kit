@@ -33,6 +33,20 @@ Recommended sampling:
 - 10s clip: 4 to 6 fps
 - 15s trailer/action clip: 3 to 5 fps
 
+For action, fight, chase, sport, disaster, and superpower clips, also run:
+
+```zsh
+zsh scripts/analyze_motion.sh input.mp4 output-motion.json
+```
+
+The analyzer is a crude frame-difference gate, not a director. Use it to catch clips that are visually polished but physically static.
+
+Interpretation:
+
+- `static` or `weak`: fail an action/trailer clip unless the user asked for a beauty hold.
+- `moderate`: inspect manually; often acceptable for dramatic or slow-motion action.
+- `strong`: enough visible motion exists, but still judge identity, camera, physics, and prompt following.
+
 ## Score Rubric
 
 Score 0 to 2 each:
@@ -47,6 +61,8 @@ Score 0 to 2 each:
 8. artifact rate.
 
 Accept around 12/16 or higher unless the user wants pure experimentation.
+
+For action/trailer work, do not accept 12/16 if motion clarity is 0 or 1 and the motion analyzer says `static` or `weak`. Pretty stillness is not action.
 
 ## Diagnose The Failure Source
 
@@ -85,13 +101,16 @@ Likely if:
 - the action arc is wrong,
 - the camera behavior is vague or random,
 - too many unrelated events were requested.
+- the motion report is `static` or `weak` on a supposed action clip.
 
 Fix:
 - simplify,
 - shorten,
 - restore one dominant action,
 - move camera instructions earlier,
-- reinforce the ending image.
+- reinforce the ending image,
+- add an action-motion core: visible displacement every 2 to 3 seconds, environment reaction, impact/reversal, and changed final state,
+- split into 5s shotlets if one 15s prompt cannot carry setup, strain, payoff, and aftermath.
 
 ### Reference Problem
 
@@ -151,6 +170,7 @@ Every finished run should produce one compact lesson:
 - what strategy was used,
 - what clearly worked,
 - what clearly failed,
+- the motion analyzer verdict for action/trailer clips,
 - what to keep constant next time,
 - what single variable to change next.
 

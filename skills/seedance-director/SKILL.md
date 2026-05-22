@@ -34,7 +34,8 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
 6. Before submitting in Bubio, verify attached refs, aspect ratio, duration, and visible cost. Browser uploads may require copying generated images into the workspace first.
 7. After submitting a slow Bubio job, do not burn the whole turn passively watching. Prefer `--submit-only` plus a 5-minute heartbeat/checkpoint when the client supports it; on return, retrieve the result.
 8. Retrieve/download the result locally, return the video directly in the Codex thread, make a review sheet, and critique the returned artifact.
-9. Save a compact run lesson next to the output artifacts, then decide whether to keep, rerun, regenerate refs, split into shots, or simplify the ask.
+9. For action, trailer, fight, chase, disaster, sport, or superpower clips, run the motion analyzer before final critique: `zsh scripts/analyze_motion.sh output.mp4 output-motion.json`. Treat `static` or `weak` as a rerun warning unless the user explicitly wanted a held beauty shot.
+10. Save a compact run lesson next to the output artifacts, then decide whether to keep, rerun, regenerate refs, split into shots, or simplify the ask.
 
 ## Guardrails
 
@@ -49,6 +50,7 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
 - Do not download or critique a background loop, stale feed video, or old result just because it is the first visible `<video>`. Match the current result by fresh submit state, top/current result card, prompt/timestamp metadata, and signed `/studio/videos/*.mp4` URL.
 - Do not let an action-trailer prompt become a static VFX tableau. If the brief promises action, require visible phase changes: threat motion, character reaction/strain, environment movement, reversal or contact, and a final changed state.
 - Do not rely on vague "attached image" language when references are uploaded. Say exactly what `@ref1`, `@ref2`, and later refs mean for the shot.
+- Do not judge an action clip as successful on beauty alone. If the frame sheet and motion score show one sustained pose/effect, call it out and fix the next prompt around larger displacement, impact, escalation, or a split-shot structure.
 
 ## References To Load
 
@@ -70,6 +72,7 @@ For a normal execution request, provide:
 - the generated video returned directly in the thread when the interface supports local media display,
 - the generated output path if media was created,
 - the review sheet path or image when available,
+- the motion report path and verdict when the clip is action/trailer/fight/chase/disaster/superpower,
 - the saved run lesson path,
 - a short critique with the next improvement move.
 

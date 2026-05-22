@@ -40,10 +40,13 @@ Best for:
 - multi-character combat,
 - and edit-ready sequences.
 
+If exact action order matters, prefer per-shot stills over one dense storyboard sheet. A sheet can teach grammar; a single clean still can anchor a generated shot.
+
 ## Practical Lessons
 
 - Use 6 to 10 strong beats instead of 16 tiny pose changes for cinematic action.
 - Motion sheets are better at rhythm than exact sequencing.
+- For mechanical pose reference, a grayscale grid can work well because it removes background competition and focuses the model on body mechanics. For cinematic continuity, convert the key beats into clean scene stills before generation.
 - If a sheet contains arrows, labels, or panel borders, use it as reference guidance rather than literal first frame unless the whole graphic look is intentional.
 - If action continuity keeps failing, create a combined contact frame where both subjects already share the same world and geography.
 - When two separate refs interact, keep the background, sky, lighting, and color temperature almost identical.
@@ -59,6 +62,14 @@ For high-speed combat, ask Seedance for:
 - and a strong final hold.
 
 Do not try to narrate every strike.
+
+Use the storyboard to define readable geography:
+
+- who faces whom,
+- which side each subject starts on,
+- where the camera begins,
+- where the camera moves,
+- and what object or surface proves cause and effect.
 
 ## Action Trailer State Change
 
