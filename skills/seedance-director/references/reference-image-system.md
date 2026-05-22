@@ -4,6 +4,13 @@
 
 For premium Seedance work, author at least one still before the video run.
 
+## File Handling For Browser Uploads
+
+- Built-in image generation may save under `~/.codex/generated_images`.
+- Browser automation tools may only upload from workspace-approved roots.
+- Before uploading a generated still to Bubio, copy the selected image into the current project or an `output/seedance-director/` folder and upload that copy.
+- Leave the original generated image in place unless the user explicitly asks to delete it.
+
 ## Reference Types
 
 ### First-Frame Still
@@ -54,6 +61,18 @@ Define the artifact type before the subject:
 - `shared-world scene still`
 
 Then describe subject, environment, lighting, material response, and details.
+
+### Public Action Safety Defaults
+
+For broad public action trailers, make the scene intense without making the still look like graphic violence:
+
+- prefer armored attackers, drones, silhouettes, or non-human threats,
+- use sparks, rain, debris, broken glass, force waves, dust, and motion as impact language,
+- avoid blood, gore, visible wounds, dead bodies, torture framing, and helpless victims,
+- avoid excessive gun/shell-casing emphasis unless the user explicitly asks for gun action,
+- keep the hero pose controlled and cinematic, not sadistic.
+
+This is not only moderation hygiene. Cleaner non-gory action references are usually easier for Seedance to animate coherently.
 
 ### Exact Text And Branding
 

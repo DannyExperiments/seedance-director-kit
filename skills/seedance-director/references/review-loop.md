@@ -29,6 +29,21 @@ Accept around 12/16 or higher unless the user wants pure experimentation.
 
 ## Diagnose The Failure Source
 
+### UI / Retrieval Problem
+
+Likely if:
+- a visible `Render failed` card appears before the new job was submitted,
+- the failed card prompt does not match the current prompt,
+- the failed card has the wrong refs, aspect, or old timestamp,
+- clicking the feed opened an old card behind the prompt editor.
+
+Fix:
+- close the stale card,
+- return to the prompt editor,
+- verify current refs, aspect, duration, and cost,
+- submit only after matching the current job state,
+- after generation, match result cards by prompt/timestamp/nearby metadata rather than the first visible card.
+
 ### Prompt Problem
 
 Likely if:

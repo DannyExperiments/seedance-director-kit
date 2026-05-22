@@ -28,8 +28,9 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
    - the bundled Bubio automation runner via `zsh scripts/bubio_runner.sh` if appropriate,
    - another approved Seedance endpoint if the user uses one.
    - If Bubio is the route and no reusable session exists yet, prompt the user to log into Bubio once, then save and reuse the local session.
-6. Retrieve the result, make a review sheet, and critique it.
-7. Decide whether to keep, rerun, regenerate refs, split into shots, or simplify the ask.
+6. Before submitting in Bubio, verify attached refs, aspect ratio, duration, and visible cost. Browser uploads may require copying generated images into the workspace first.
+7. Retrieve the result, make a review sheet, and critique it.
+8. Decide whether to keep, rerun, regenerate refs, split into shots, or simplify the ask.
 
 ## Guardrails
 
@@ -39,6 +40,7 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
 - If Bubio authentication is missing or expired, explicitly ask the user to log into Bubio once before generation, then reuse the saved local session on future runs.
 - For branded products or exact package fidelity, treat visible text/logo as an invariant and keep the original product asset involved.
 - Do not assume a whole multi-panel storyboard should be used as `First Frame`; often it should be reference guidance only.
+- Do not treat an old visible Bubio `Render failed` card as the current job. Match failures/downloads to the current prompt, refs, and timestamp.
 
 ## References To Load
 

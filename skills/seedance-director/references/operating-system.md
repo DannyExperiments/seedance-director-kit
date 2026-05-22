@@ -94,3 +94,12 @@ Choose the architecture first, then the scene details.
 - If a local Bubio runner exists, it can be faster than screenshot-driven clicking.
 - If using browser automation, match the completed result by prompt/timestamp or nearby card metadata, not by the first visible video node.
 - Save finished MP4s immediately if the route exposes signed temporary URLs.
+
+## Bubio First-Run Browser Pitfalls
+
+- If Bubio is logged out, pause and ask the user to log in once. Never ask for or store the password.
+- First-run onboarding overlays can intercept clicks. Close any tutorial/coachmark overlay before changing modes or settings.
+- Bubio can leave old result cards under the floating prompt editor. A visible `Render failed` card is not evidence that the current job failed unless it matches the current prompt, refs, and timestamp.
+- After uploading media, verify the attached ref count and remove accidental stale refs before generation.
+- Bubio may default to `1:1` and `5s`. Explicitly set the requested aspect and duration, then verify the visible `Generate` cost before submitting.
+- If the UI cannot reach the requested duration, choose the closest available duration and say so before submitting.
