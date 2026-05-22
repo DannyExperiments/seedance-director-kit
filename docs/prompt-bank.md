@@ -19,7 +19,8 @@ Use this instead of the generic trailer when the user asks for action, powers, c
 
 ```text
 FORMAT: 15s / cinematic action trailer with visible state change.
-Use the attached image as [first frame/reference] and preserve [core subject/world/style].
+REF MAP: @ref1 = [first frame / hero identity / shared-world still]. @ref2 = [optional enemy / environment / payoff frame].
+Use @ref1 as [first frame/reference] and preserve [core subject/world/style]. If @ref2 is attached, use @ref2 only for [its assigned role].
 (0-2s) Immediate threat motion: [danger is already moving/worsening], not a static pose. Camera [close/low/wide] establishes geography.
 (2-5s) Hero reaction: [hero physically strains, dodges, runs, launches, catches, or redirects]. The environment reacts with [debris/water/light/cloth/smoke] moving in a clear direction.
 (5-9s) Escalation: [threat changes position or speed], [secondary object/person/environment element] moves, and cause -> effect remains readable.
@@ -32,7 +33,7 @@ Guardrail: do not sustain one levitation/force-field/tableau for the whole clip.
 ## Product Commercial
 
 ```text
-Use the attached product image as the first frame and preserve the real product branding exactly. 15s premium commercial shot.
+Use @ref1 as the product reference and preserve the real product branding exactly. 15s premium commercial shot.
 (0-4s) Hero reveal: the product stands dominant in [premium environment] as the camera [pushes / arcs / glides].
 (4-9s) Energy or flavor world blooms around it through [liquid / particles / condensation / light effects] while the label remains crisp and unchanged.
 (9-13s) Dynamic product motion or environmental crescendo.
@@ -81,5 +82,5 @@ One standout finishing beat with strong silhouette or positional advantage.
 ## I2V Short Form
 
 ```text
-Use the attached image as the first frame. [duration] continuous shot: [environment continues from image] as the camera [one motivated move]. [Subject] [one action], causing [environment reaction]. End on [specific final composition] with a final 0.7 seconds hold.
+Use @ref1 as the exact first frame. [duration] continuous shot: [environment continues from @ref1] as the camera [one motivated move]. [Subject from @ref1] [one action], causing [environment reaction]. End on [specific final composition] with a final 0.7 seconds hold.
 ```

@@ -57,6 +57,8 @@ Use when:
 
 Keep backgrounds and lighting nearly identical across refs when the characters will interact. Small mismatches in sky, color temperature, or location rendering can poison the cohesion.
 
+Bind uploaded references by token in the prompt. In Bubio, the visible upload order should become `@ref1`, `@ref2`, `@ref3`. In official/API-style routes, use the provider's image labels such as `@Image1`, `@Image 1`, or `Image 1`. Do not leave Seedance to infer which attached image is the hero, storyboard, enemy, environment, or payoff.
+
 ### Use Storyboard
 
 Use when:

@@ -23,6 +23,8 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
    - hybrid when quality is critical.
 3. Author the needed stills with image generation before video submission.
 4. Draft a Seedance-native prompt that lets the image carry identity while text carries motion, camera, environment reaction, and ending.
+   - Bind every uploaded reference explicitly in the prompt. For Bubio, use the visible upload order as `@ref1`, `@ref2`, etc. For official/API routes that label assets as images, use that route's form such as `@Image1`, `@Image 1`, or `Image 1`.
+   - Include a short ref map near the top of the prompt whenever more than one image is uploaded.
 5. Run the generation through the user's available Seedance route:
    - a logged-in Bubio browser session,
    - the bundled Bubio automation runner via `zsh scripts/bubio_runner.sh` if appropriate,
@@ -46,6 +48,7 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
 - Do not make the user visit Bubio just to see the result. Delivery is thread-first: download the MP4, present it in the thread, then critique it.
 - Do not download or critique a background loop, stale feed video, or old result just because it is the first visible `<video>`. Match the current result by fresh submit state, top/current result card, prompt/timestamp metadata, and signed `/studio/videos/*.mp4` URL.
 - Do not let an action-trailer prompt become a static VFX tableau. If the brief promises action, require visible phase changes: threat motion, character reaction/strain, environment movement, reversal or contact, and a final changed state.
+- Do not rely on vague "attached image" language when references are uploaded. Say exactly what `@ref1`, `@ref2`, and later refs mean for the shot.
 
 ## References To Load
 

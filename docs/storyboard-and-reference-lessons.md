@@ -47,6 +47,7 @@ Best for:
 - If a sheet contains arrows, labels, or panel borders, use it as reference guidance rather than literal first frame unless the whole graphic look is intentional.
 - If action continuity keeps failing, create a combined contact frame where both subjects already share the same world and geography.
 - When two separate refs interact, keep the background, sky, lighting, and color temperature almost identical.
+- Bind each uploaded image in the prompt by order. In Bubio: `@ref1 = storyboard`, `@ref2 = hero`, `@ref3 = enemy/contact/payoff`. In API routes, adapt to that provider's image-token syntax.
 
 ## Action-Specific Rule
 

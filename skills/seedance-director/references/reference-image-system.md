@@ -106,6 +106,29 @@ For premium ad stills, structure the prompt around:
 - If the user wants two characters fighting, separate refs can work well, but they should live in the same scene conditions.
 - If needed, add a third composed reference representing the later contact or payoff beat.
 
+### Reference Token Binding
+
+Reference order is part of the prompt. After uploading images, make the first lines of the Seedance prompt map each asset to its role.
+
+For Bubio, use the visible thumbnail order:
+
+```text
+REF MAP:
+@ref1 = [opening first-frame / hero identity / product pack / storyboard sheet]
+@ref2 = [enemy / second character / environment / final payoff frame]
+@ref3 = [optional shared-world contact frame or later hero moment]
+```
+
+For official/API routes, adapt to the route's own labels, commonly `@Image1`, `@Image 1`, `Image 1`, or `[Image1]`.
+
+Rules:
+
+- Single first-frame: start with `Use @ref1 as the exact first frame.`
+- Single style/identity reference: say `Use @ref1 for [identity/style/materials], but compose the camera freely.`
+- Two interacting subjects: assign `@ref1` and `@ref2` before describing the action, and keep their backgrounds/lighting compatible.
+- Storyboard plus subject refs: map the storyboard separately from identity refs, for example `@ref1 = storyboard rhythm`, `@ref2 = hero identity`, `@ref3 = environment`.
+- Avoid generic `the attached image` unless the route does not expose reference labels.
+
 ## Storyboard Construction Rules
 
 - Use clear panel hierarchy and readable framing changes.

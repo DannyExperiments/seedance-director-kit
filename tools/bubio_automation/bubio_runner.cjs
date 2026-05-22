@@ -167,8 +167,8 @@ function readOptionalPrompt(options) {
   }
   prompt = prompt.trim();
   if (prompt && options["prefix-first-frame"]) {
-    const prefix = "Use @ref1 as the exact first frame.";
-    if (!prompt.toLowerCase().includes(prefix.toLowerCase())) {
+    const prefix = "REF MAP: @ref1 = exact opening first frame / primary visual reference.\nUse @ref1 as the exact first frame.";
+    if (!/@\s*ref\s*1\b/i.test(prompt)) {
       prompt = `${prefix}\n\n${prompt}`;
     }
   }
@@ -181,6 +181,31 @@ function readPrompt(options) {
     fail("No prompt provided. Use --prompt or --prompt-file.");
   }
   return prompt;
+}
+
+function hasExplicitRefMention(prompt, index) {
+  const oneBased = index + 1;
+  const patterns = [
+    new RegExp(`@\\s*ref\\s*${oneBased}\\b`, "i"),
+    new RegExp(`@\\s*image\\s*${oneBased}\\b`, "i"),
+    new RegExp(`\\bimage\\s*${oneBased}\\b`, "i"),
+    new RegExp(`\\[\\s*image\\s*${oneBased}\\s*\\]`, "i"),
+  ];
+  return patterns.some((pattern) => pattern.test(prompt));
+}
+
+function warnAboutImplicitRefs(prompt, refs) {
+  if (!refs.length) {
+    return;
+  }
+  const missing = refs
+    .map((_, index) => index)
+    .filter((index) => !hasExplicitRefMention(prompt, index));
+  if (!missing.length) {
+    return;
+  }
+  const names = missing.map((index) => `@ref${index + 1}`).join(", ");
+  console.warn(`WARNING: ${refs.length} reference file(s) attached, but prompt does not explicitly mention ${names}. Seedance/Bubio often follows refs better when each uploaded image is bound by token and role.`);
 }
 
 function resolveFiles(options) {
@@ -1419,6 +1444,7 @@ async function runGenerate(options) {
     await ensureLoggedIn(page, stateFile);
     const previousVideoUrls = new Set(await getStudioVideoUrlsFromPage(page));
     const beforeDownloads = await page.getByText("Download", { exact: true }).count().catch(() => 0);
+    warnAboutImplicitRefs(prompt, refs);
 
     logStep("Filling prompt");
     await fillPrompt(page, prompt);

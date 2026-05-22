@@ -3,6 +3,7 @@
 ## General Rules
 
 - Let attached images carry identity and look. Let the prompt carry motion, camera, environment reaction, audio, and ending.
+- If references are attached, bind them explicitly: `@ref1 = ...`, `@ref2 = ...` for Bubio, or the route's image labels such as `@Image1` / `Image 1` for official/API routes.
 - Put camera language early.
 - Keep one dominant action per shot.
 - Use setup -> trigger -> escalation -> payoff for most 15-second clips.
@@ -13,7 +14,7 @@
 ## 5s I2V Test
 
 ```text
-Use the attached image as the first frame. 5s continuous shot: [environment continues from image] as the camera [one motivated move]. [Subject] [one dominant action], causing [environment reaction]. [Secondary motion] trails naturally. End on [specific final frame] with a final 0.7 seconds hold. Cinematic realism, physical lighting, natural motion blur. Audio: [ambience], [one key effect], no music.
+Use @ref1 as the exact first frame. 5s continuous shot: [environment continues from @ref1] as the camera [one motivated move]. [Subject from @ref1] [one dominant action], causing [environment reaction]. [Secondary motion] trails naturally. End on [specific final frame] with a final 0.7 seconds hold. Cinematic realism, physical lighting, natural motion blur. Audio: [ambience], [one key effect], no music.
 ```
 
 ## 10s Structured Shot
@@ -46,7 +47,8 @@ Use this instead of the generic core when the user asks for "action trailer", "e
 
 ```text
 FORMAT: 15s / cinematic action trailer with visible state change.
-Use the attached image as [first frame/reference] and preserve [core subject/world/style].
+REF MAP: @ref1 = [first frame / hero identity / shared-world still]. @ref2 = [optional enemy / environment / payoff frame].
+Use @ref1 as [first frame/reference] and preserve [core subject/world/style]. If @ref2 is attached, use @ref2 only for [its assigned role].
 (0-2s) Immediate threat motion: [danger is already moving/worsening], not a static pose. Camera [close/low/wide] establishes geography.
 (2-5s) Hero reaction: [hero physically strains, dodges, runs, launches, catches, or redirects]. The environment reacts with [debris/water/light/cloth/smoke] moving in a clear direction.
 (5-9s) Escalation: [threat changes position or speed], [secondary object/person/environment element] moves, and cause -> effect remains readable.
@@ -59,7 +61,7 @@ Guardrail: do not sustain one levitation/force-field/tableau for the whole clip.
 ## Product / Commercial Architecture
 
 ```text
-Use the attached product image as the first frame and preserve the real product branding exactly. 15s premium commercial shot.
+Use @ref1 as the product reference and preserve the real product branding exactly. 15s premium commercial shot.
 (0-4s) Hero reveal: the product stands dominant in [premium environment] as the camera [pushes / arcs / glides].
 (4-9s) Energy or flavor world blooms around it through [liquid / particles / condensation / light effects] while the label remains crisp and unchanged.
 (9-13s) Dynamic product motion or environmental crescendo: [rotation / burst / splash / glow] with controlled, believable material physics.
@@ -136,3 +138,4 @@ No teleporting. Respect weight and inertia. Clear cause and effect. Prioritize c
 - A clean single still from beat 1 is usually best as `First Frame`.
 - If exact sequencing matters, split the sheet into separate shot stills and generate per shot.
 - Motion sheets teach rhythm and mechanics; they do not guarantee exact panel order.
+- If a storyboard and subject refs are attached together, bind them explicitly: `@ref1 = storyboard rhythm/camera`, `@ref2 = hero identity`, `@ref3 = environment or payoff`.

@@ -69,6 +69,8 @@ Use when the clip should inherit a premium world and visual taste even if the fi
 
 Use when multiple subjects, a product and environment, or a later payoff beat all need visual anchors.
 
+After uploading multiple refs, put a ref map at the top of the prompt. For Bubio, use the visible order as `@ref1`, `@ref2`, etc. For API/official-style routes, use the provider's image labels such as `@Image1`, `@Image 1`, or `Image 1`.
+
 ### Storyboard
 
 Use when motion logic, camera choreography, or interaction grammar matters.
