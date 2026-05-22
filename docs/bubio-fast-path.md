@@ -36,7 +36,7 @@ zsh tools/bubio_automation/bubio_runner.sh doctor
 - sanitized API discovery without submitting paid jobs,
 - repeatable generate flow,
 - pull completed signed MP4 URLs quickly,
-- critique after retrieval.
+- thread-first MP4 return plus review-sheet critique after retrieval.
 
 ## API discovery
 

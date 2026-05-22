@@ -15,6 +15,8 @@ Use it when repeated Bubio runs would be too slow through screenshot-driven brow
 - submit a generation,
 - and download the finished MP4 quickly.
 
+The runner is not complete until the MP4 is back in the user's thread. Use Bubio as the render backend, not as the user's required viewing surface.
+
 ## Why it matters
 
 The user may want one installable skill that already includes the practical fast path. Bundling the runner inside the skill means a GitHub `skill-installer` install can bring both the public directing knowledge and the automation path at once.
@@ -38,6 +40,22 @@ zsh scripts/bubio_runner.sh generate --prompt-file "/absolute/path/to/prompt.txt
 ```
 
 GitHub ZIP installs may not preserve executable bits on shell scripts, so invoke the runner with `zsh` rather than relying on `./scripts/bubio_runner.sh`.
+
+## Thread Return Pattern
+
+After `generate` or `download-latest` prints `Saved video to ...` or `Saved latest video to ...`:
+
+1. copy the absolute MP4 path,
+2. build a review sheet with `zsh scripts/make_review_sheet.sh`,
+3. return both media files in the thread,
+4. critique only after inspecting the returned MP4/review sheet.
+
+Codex Desktop example:
+
+```markdown
+![Generated video](/absolute/path/to/result.mp4)
+![Review sheet](/absolute/path/to/result-review.jpg)
+```
 
 ## API Discovery Mode
 

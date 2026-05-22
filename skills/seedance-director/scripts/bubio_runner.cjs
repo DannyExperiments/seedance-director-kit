@@ -950,6 +950,21 @@ function sanitizeFilename(name) {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-");
 }
 
+function suggestedReviewSheetPath(videoPath) {
+  const parsed = path.parse(videoPath);
+  return path.join(parsed.dir, `${parsed.name}-review-sheet.jpg`);
+}
+
+function printThreadDeliveryHint(videoPath) {
+  const reviewSheetPath = suggestedReviewSheetPath(videoPath);
+  const reviewScriptPath = path.join(__dirname, "make_review_sheet.sh");
+  console.log(`Thread video markdown: ![Generated video](${videoPath})`);
+  if (fs.existsSync(reviewScriptPath)) {
+    console.log(`Review sheet command: zsh "${reviewScriptPath}" "${videoPath}" "${reviewSheetPath}" 4`);
+    console.log(`Thread review markdown after sheet exists: ![Review sheet](${reviewSheetPath})`);
+  }
+}
+
 async function runDoctor(options) {
   const stateFile = path.resolve(expandHome(options["state-file"] || DEFAULT_STATE_FILE));
   console.log(`Bubio studio: ${BUBIO_STUDIO_URL}`);
@@ -1200,6 +1215,7 @@ async function runDownloadLatest(options) {
     }
     const finalPath = await fetchAndSaveVideoUrl(videoUrl, outputDir, options["download-name"]);
     console.log(`Saved latest video to ${finalPath}`);
+    printThreadDeliveryHint(finalPath);
   } finally {
     await context.close().catch(() => {});
     await browser.close().catch(() => {});
@@ -1282,6 +1298,7 @@ async function runGenerate(options) {
     }
     const finalPath = await fetchAndSaveVideoUrl(freshVideoUrl, outputDir, options["download-name"]);
     console.log(`Saved video to ${finalPath}`);
+    printThreadDeliveryHint(finalPath);
   } finally {
     await context.close().catch(() => {});
     await browser.close().catch(() => {});

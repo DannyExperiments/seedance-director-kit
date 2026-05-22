@@ -6,6 +6,8 @@ It is designed for the workflow:
 
 `rough idea -> strategy choice -> authored stills/storyboard -> Seedance prompt -> Bubio run -> critique -> next move`
 
+The intended user experience is thread-first: Bubio renders the clip, but Codex retrieves the MP4, returns it directly in the conversation, creates a review sheet when possible, and critiques the returned artifact.
+
 ## What is in this kit
 
 - `skills/seedance-director/`
@@ -54,7 +56,7 @@ The runner also includes `discover-api`, a non-spending command that records red
 Short invocation:
 
 ```text
-Use $seedance-director. Take my rough idea, choose the best Seedance strategy, create any needed reference images or storyboard sheets, generate the video through my logged-in Bubio or available Seedance route, retrieve the output, critique it, and tell me the next improvement move.
+Use $seedance-director. Take my rough idea, choose the best Seedance strategy, create any needed reference images or storyboard sheets, generate the video through my logged-in Bubio or available Seedance route, retrieve/download the MP4, return the video directly in this thread, critique it, and tell me the next improvement move.
 ```
 
 The fuller handoff is in:

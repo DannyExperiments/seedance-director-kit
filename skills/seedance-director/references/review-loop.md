@@ -1,5 +1,26 @@
 # Review Loop
 
+## Delivery First
+
+The user should not have to open Bubio to see the finished clip.
+
+After a generation completes:
+
+1. download or otherwise retrieve the MP4 locally,
+2. return the video directly in the thread when the client supports local media display,
+3. make a frame/review sheet,
+4. return the review sheet in the thread when possible,
+5. then critique the result.
+
+For Codex Desktop, use absolute-path media embeds:
+
+```markdown
+![Generated video](/absolute/path/to/output.mp4)
+![Review sheet](/absolute/path/to/review-sheet.jpg)
+```
+
+If the client cannot render local media, still provide the absolute output path and critique from the retrieved file. Do not ask the user to go back to Bubio just to inspect the result.
+
 ## Review Standard
 
 Do not judge a clip by the first second alone. Pull a frame sheet and evaluate the whole arc.

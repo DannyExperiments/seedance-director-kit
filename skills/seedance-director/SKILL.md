@@ -30,7 +30,7 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
    - If Bubio is the route and no reusable session exists yet, prompt the user to log into Bubio once, then save and reuse the local session.
    - If trying to replace browser clicking with direct API calls, run the bundled `discover-api` mode first and base endpoint assumptions on the sanitized local evidence.
 6. Before submitting in Bubio, verify attached refs, aspect ratio, duration, and visible cost. Browser uploads may require copying generated images into the workspace first.
-7. Retrieve the result, make a review sheet, and critique it.
+7. Retrieve/download the result locally, return the video directly in the Codex thread, make a review sheet, and critique the returned artifact.
 8. Decide whether to keep, rerun, regenerate refs, split into shots, or simplify the ask.
 
 ## Guardrails
@@ -42,6 +42,7 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
 - For branded products or exact package fidelity, treat visible text/logo as an invariant and keep the original product asset involved.
 - Do not assume a whole multi-panel storyboard should be used as `First Frame`; often it should be reference guidance only.
 - Do not treat an old visible Bubio `Render failed` card as the current job. Match failures/downloads to the current prompt, refs, and timestamp.
+- Do not make the user visit Bubio just to see the result. Delivery is thread-first: download the MP4, present it in the thread, then critique it.
 
 ## References To Load
 
@@ -60,8 +61,17 @@ For a normal execution request, provide:
 - the strategy you chose and why,
 - the authored image/ref plan,
 - the Seedance prompt,
-- the generated output paths if media was created,
+- the generated video returned directly in the thread when the interface supports local media display,
+- the generated output path if media was created,
+- the review sheet path or image when available,
 - a short critique with the next improvement move.
+
+For Codex Desktop, return local media with absolute paths, for example:
+
+```markdown
+![Generated video](/absolute/path/to/output.mp4)
+![Review sheet](/absolute/path/to/review-sheet.jpg)
+```
 
 For a setup/share request, provide:
 

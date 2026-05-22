@@ -1,12 +1,13 @@
 # Bubio Automation Runner
 
-This is a small Playwright-based fast path for Bubio video generation. It is meant to replace most of the slow, manual clicking loop with five practical commands:
+This is a small Playwright-based fast path for Bubio video generation. It is meant to replace most of the slow, manual clicking loop with practical commands plus thread-return hints:
 
 1. capture a reusable authenticated Bubio session
 2. inspect the current studio UI when Bubio changes
 3. discover sanitized backend/API endpoints without spending credits
 4. submit a generation and save the finished MP4
 5. pull the latest finished MP4 directly when needed
+6. print thread-delivery Markdown and a review-sheet command after an MP4 is saved
 
 ## Why this exists
 
@@ -20,7 +21,7 @@ Computer-use is great for discovery and one-off direction, but it is not the rig
 
 This runner is the first step toward the larger remote workflow:
 
-`Remodex idea -> prompt/storyboard/image generation -> Bubio run -> critique -> optional rerun -> delivery/email`
+`Remodex idea -> prompt/storyboard/image generation -> Bubio run -> MP4 returned in thread -> critique -> optional rerun -> delivery/email`
 
 ## Security model
 
@@ -113,6 +114,12 @@ Useful when a video has already rendered in Bubio and you just want the MP4 quic
 zsh ./bubio_runner.sh download-latest --download-name "latest.mp4"
 ```
 
+After saving an MP4, the runner prints:
+
+- a Markdown video embed for Codex Desktop,
+- a `make_review_sheet.sh` command,
+- and the Markdown review-sheet embed to use after the sheet exists.
+
 ### 5. Generate and download
 
 Text-only example:
@@ -148,13 +155,14 @@ This version is intentionally narrow and honest:
 - supports best-effort media attachment
 - uses prompt steering for first-frame behavior via `--prefix-first-frame`
 - downloads are now pulled from Bubio's signed `studio/videos/*.mp4` result URL instead of relying on the hover-only UI download button
+- after MP4 retrieval, prints thread-return Markdown and a review-sheet command
 
 What still needs a second pass:
 
 - explicit Bubio UI switching between exact `reference` vs exact `first frame` attachment roles
 - more robust attachment verification after upload
 - queueing multiple jobs
-- automatic critique/review-sheet chaining
+- fully automatic critique/review-sheet chaining inside the runner
 - delivery actions like email
 
 ## Current status
