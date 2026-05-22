@@ -28,6 +28,7 @@ Default stance: for serious work, do not treat Seedance as prompt-only. Author a
    - the bundled Bubio automation runner via `zsh scripts/bubio_runner.sh` if appropriate,
    - another approved Seedance endpoint if the user uses one.
    - If Bubio is the route and no reusable session exists yet, prompt the user to log into Bubio once, then save and reuse the local session.
+   - If trying to replace browser clicking with direct API calls, run the bundled `discover-api` mode first and base endpoint assumptions on the sanitized local evidence.
 6. Before submitting in Bubio, verify attached refs, aspect ratio, duration, and visible cost. Browser uploads may require copying generated images into the workspace first.
 7. Retrieve the result, make a review sheet, and critique it.
 8. Decide whether to keep, rerun, regenerate refs, split into shots, or simplify the ask.

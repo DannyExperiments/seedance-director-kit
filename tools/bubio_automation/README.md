@@ -1,11 +1,12 @@
 # Bubio Automation Runner
 
-This is a small Playwright-based fast path for Bubio video generation. It is meant to replace most of the slow, manual clicking loop with four practical commands:
+This is a small Playwright-based fast path for Bubio video generation. It is meant to replace most of the slow, manual clicking loop with five practical commands:
 
 1. capture a reusable authenticated Bubio session
 2. inspect the current studio UI when Bubio changes
-3. submit a generation and save the finished MP4
-4. pull the latest finished MP4 directly when needed
+3. discover sanitized backend/API endpoints without spending credits
+4. submit a generation and save the finished MP4
+5. pull the latest finished MP4 directly when needed
 
 ## Why this exists
 
@@ -15,6 +16,7 @@ Computer-use is great for discovery and one-off direction, but it is not the rig
 - uploading media
 - polling for completion
 - downloading finished videos
+- discovering stable backend routes that can become direct CLI commands
 
 This runner is the first step toward the larger remote workflow:
 
@@ -74,7 +76,36 @@ This saves a screenshot to:
 
 `output/seedance-bubio/automation-debug/`
 
-### 3. Download the latest finished video
+### 3. Discover API candidates
+
+Useful when improving the CLI/API path. This opens Bubio Studio with saved auth, observes sanitized network traffic, and saves an endpoint summary without submitting a generation:
+
+```zsh
+zsh ./bubio_runner.sh discover-api --headless --observe-ms 15000
+```
+
+This saves a redacted JSON summary and screenshot to:
+
+`output/seedance-bubio/api-discovery/`
+
+The summary strips query strings, cookies, auth headers, raw body values, signed URLs, and full response bodies. It keeps method/path/status/content-type data plus request and response shape metadata so the next pass can identify upload/create/poll/download routes.
+
+For deeper discovery, add `--exercise-form` plus the usual prompt/settings/ref options. This fills the form and can reveal upload/form-state calls, but still does not click `Generate`:
+
+```zsh
+zsh ./bubio_runner.sh discover-api \
+  --headless \
+  --exercise-form \
+  --prompt-file "/absolute/path/to/prompt.txt" \
+  --ref "/absolute/path/to/ref.png" \
+  --aspect 16:9 \
+  --duration 15 \
+  --observe-ms 15000
+```
+
+Use this carefully with private reference images because uploads may still send files to Bubio storage even though no video generation is submitted.
+
+### 4. Download the latest finished video
 
 Useful when a video has already rendered in Bubio and you just want the MP4 quickly:
 
@@ -82,7 +113,7 @@ Useful when a video has already rendered in Bubio and you just want the MP4 quic
 zsh ./bubio_runner.sh download-latest --download-name "latest.mp4"
 ```
 
-### 4. Generate and download
+### 5. Generate and download
 
 Text-only example:
 
@@ -112,6 +143,7 @@ zsh ./bubio_runner.sh generate \
 This version is intentionally narrow and honest:
 
 - optimized first for `Create`
+- includes non-spending API discovery for future direct CLI work
 - supports prompt fill, duration, aspect, sound, generation, and download
 - supports best-effort media attachment
 - uses prompt steering for first-frame behavior via `--prefix-first-frame`

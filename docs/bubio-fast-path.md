@@ -33,6 +33,32 @@ zsh tools/bubio_automation/bubio_runner.sh doctor
 ## Current practical model
 
 - one-time login capture,
+- sanitized API discovery without submitting paid jobs,
 - repeatable generate flow,
 - pull completed signed MP4 URLs quickly,
 - critique after retrieval.
+
+## API discovery
+
+Use the discovery command before trying to build direct Bubio API subcommands:
+
+```zsh
+zsh tools/bubio_automation/bubio_runner.sh discover-api --headless --observe-ms 15000
+```
+
+This records a redacted endpoint summary under `output/seedance-bubio/api-discovery/`. It does not submit a generation. The summary keeps route/method/status/body-shape information and strips query strings, cookies, auth headers, raw body values, signed URLs, and full response bodies.
+
+For deeper discovery, add `--exercise-form` plus prompt/settings/refs. That fills Bubio controls and can reveal upload/form-state calls, but still does not click `Generate`:
+
+```zsh
+zsh tools/bubio_automation/bubio_runner.sh discover-api \
+  --headless \
+  --exercise-form \
+  --prompt-file "/absolute/path/to/prompt.txt" \
+  --ref "/absolute/path/to/ref.png" \
+  --aspect 16:9 \
+  --duration 15 \
+  --observe-ms 15000
+```
+
+Use `--exercise-form` carefully with private reference images because uploads may still send files to Bubio storage even though no video generation is submitted.

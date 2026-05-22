@@ -11,6 +11,7 @@ Use it when repeated Bubio runs would be too slow through screenshot-driven brow
 
 - capture or bootstrap a reusable Bubio auth state,
 - inspect the studio UI,
+- discover sanitized Bubio network/API endpoints without submitting a generation,
 - submit a generation,
 - and download the finished MP4 quickly.
 
@@ -30,11 +31,32 @@ The user may want one installable skill that already includes the practical fast
 ```zsh
 zsh scripts/bubio_runner.sh capture-auth
 zsh scripts/bubio_runner.sh inspect-studio
+zsh scripts/bubio_runner.sh discover-api --headless --observe-ms 15000
+zsh scripts/bubio_runner.sh discover-api --headless --exercise-form --prompt-file "/absolute/path/to/prompt.txt" --ref "/absolute/path/to/ref.png" --aspect 16:9 --duration 15 --observe-ms 15000
 zsh scripts/bubio_runner.sh download-latest --download-name "latest.mp4"
 zsh scripts/bubio_runner.sh generate --prompt-file "/absolute/path/to/prompt.txt" --aspect 16:9 --duration 15 --sound on
 ```
 
 GitHub ZIP installs may not preserve executable bits on shell scripts, so invoke the runner with `zsh` rather than relying on `./scripts/bubio_runner.sh`.
+
+## API Discovery Mode
+
+Use `discover-api` when you want to move beyond browser clicking toward a real Bubio CLI/API client.
+
+It opens Bubio Studio with saved auth, watches network traffic, and saves a sanitized summary under:
+
+`output/seedance-bubio/api-discovery/`
+
+It does **not** click `Generate` or submit a credit-spending job. The summary strips query strings, cookies, auth headers, raw request values, signed URLs, and full response bodies. It keeps endpoint paths, methods, statuses, content types, request body field/key shapes, and response JSON key shapes.
+
+Add `--exercise-form` when you want the recorder to fill prompt/settings/uploads without submitting. This can reveal upload and form-state routes. Use it carefully with private reference images because uploads may still send those files to Bubio storage even though no video generation is submitted.
+
+The output is meant to answer:
+
+- which backend hosts Bubio uses,
+- which requests look like upload/create/poll/download routes,
+- whether direct CLI subcommands are realistic,
+- and which UI fallback pieces still need browser automation.
 
 ## Limits
 

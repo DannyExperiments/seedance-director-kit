@@ -13,7 +13,7 @@ It is designed for the workflow:
 - `docs/`
   - the playbooks behind the skill
 - `tools/bubio_automation/`
-  - a faster Bubio runner path for repeated work
+  - a faster Bubio runner path for repeated work, including sanitized API discovery
 - `examples/`
   - handoff and invocation examples
 
@@ -47,6 +47,7 @@ If the user wants faster Bubio execution, keep this repo available locally and u
 
 The user logs into Bubio once. The runner stores only reusable local auth state, not a password.
 If no saved Bubio session exists yet, Codex should ask the user to log in once and then reuse that saved local session on future runs.
+The runner also includes `discover-api`, a non-spending command that records redacted Bubio endpoint structure so future versions can replace more browser clicking with direct CLI/API calls.
 
 ## Use
 

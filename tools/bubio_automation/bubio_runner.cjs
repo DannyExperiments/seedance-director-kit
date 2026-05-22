@@ -12,7 +12,9 @@ const DEFAULT_STATE_FILE = path.join(DEFAULT_AUTH_DIR, "bubio-storage-state.json
 const DEFAULT_CLONE_ROOT = path.join(DEFAULT_AUTH_DIR, "chrome-clone");
 const CHROME_ROOT = path.join(os.homedir(), "Library", "Application Support", "Google", "Chrome");
 const DEFAULT_OUTPUT_DIR = path.join(process.cwd(), "output", "seedance-bubio", "automation-downloads");
+const DEFAULT_DISCOVERY_DIR = path.join(process.cwd(), "output", "seedance-bubio", "api-discovery");
 const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
+const DEFAULT_OBSERVE_MS = 15000;
 
 function printHelp() {
   console.log(`Bubio runner
@@ -22,6 +24,7 @@ Usage:
   bubio_runner.sh capture-auth [--state-file FILE]
   bubio_runner.sh bootstrap-auth-from-profile [--chrome-profile-dir DIR]
   bubio_runner.sh inspect-studio [--state-file FILE] [--artifact-dir DIR]
+  bubio_runner.sh discover-api [--state-file FILE] [--artifact-dir DIR] [--observe-ms N] [--exercise-form]
   bubio_runner.sh download-latest [--output-dir DIR] [--download-name NAME]
   bubio_runner.sh generate [options]
 
@@ -31,6 +34,8 @@ Common options:
   --headed               Force a visible Chrome window.
   --headless             Run hidden. Use only after auth is already captured.
   --timeout-ms N         Overall wait timeout. Default: ${DEFAULT_TIMEOUT_MS}
+  --observe-ms N         API discovery observation window. Default: ${DEFAULT_OBSERVE_MS}
+  --exercise-form        In discover-api mode, fill prompt/settings/refs but do not submit.
 
 Generate options:
   --prompt TEXT          Prompt text.
@@ -51,6 +56,7 @@ Examples:
   bubio_runner.sh capture-auth
   bubio_runner.sh bootstrap-auth-from-profile --chrome-profile-dir "Default"
   bubio_runner.sh inspect-studio
+  bubio_runner.sh discover-api --headless --observe-ms 15000
   bubio_runner.sh download-latest --download-name latest.mp4
   bubio_runner.sh generate --prompt-file prompt.txt --aspect 16:9 --duration 15 --sound on
   bubio_runner.sh generate --prompt "..." --ref frame.png --prefix-first-frame
@@ -89,7 +95,7 @@ function parseArgs(argv) {
       continue;
     }
     const key = token.slice(2);
-    if (["headed", "headless", "prefix-first-frame", "help", "dry-run"].includes(key)) {
+    if (["headed", "headless", "prefix-first-frame", "help", "dry-run", "exercise-form"].includes(key)) {
       options[key] = true;
       continue;
     }
@@ -213,6 +219,7 @@ async function launchContext({
   stateFile,
   headed,
   outputDir,
+  deferGoto,
 }) {
   logStep(`Launching Chrome (${headed ? "headed" : "headless"})`);
   const browser = await chromium.launch({
@@ -229,13 +236,306 @@ async function launchContext({
   const context = await browser.newContext(contextOptions);
   context.setDefaultTimeout(15000);
   const page = await context.newPage();
-  logStep("Opening Bubio studio");
-  await page.goto(BUBIO_STUDIO_URL, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle").catch(() => {});
+  if (!deferGoto) {
+    logStep("Opening Bubio studio");
+    await page.goto(BUBIO_STUDIO_URL, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle").catch(() => {});
+  }
   if (outputDir) {
     ensureSecureDir(outputDir);
   }
   return { browser, context, page };
+}
+
+function redactPathname(pathname) {
+  return pathname.split("/").map((segment) => {
+    if (!segment) {
+      return segment;
+    }
+    const decoded = decodeURIComponent(segment);
+    const ext = path.extname(decoded).toLowerCase();
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(decoded)) {
+      return "[uuid]";
+    }
+    if (/^[0-9a-f]{24,}$/i.test(decoded)) {
+      return "[hex]";
+    }
+    if (ext && decoded.length > 36) {
+      return `[file${ext}]`;
+    }
+    if (decoded.length > 80) {
+      return "[long]";
+    }
+    return segment;
+  }).join("/");
+}
+
+function sanitizeUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    const pathname = redactPathname(url.pathname);
+    return {
+      url: `${url.origin}${pathname}`,
+      origin: url.origin,
+      host: url.host,
+      pathname,
+      queryRedacted: Boolean(url.search),
+    };
+  } catch (error) {
+    return {
+      url: "[invalid-url]",
+      origin: "",
+      host: "",
+      pathname: "",
+      queryRedacted: false,
+    };
+  }
+}
+
+function pickSafeHeaders(headers) {
+  const safe = {};
+  for (const key of ["accept", "content-type"]) {
+    if (headers[key]) {
+      safe[key] = headers[key].slice(0, 160);
+    }
+  }
+  return safe;
+}
+
+function summarizeJsonShape(value, depth = 0) {
+  if (value === null) {
+    return { type: "null" };
+  }
+  if (Array.isArray(value)) {
+    return {
+      type: "array",
+      length: value.length,
+      sample: value.length > 0 && depth < 2 ? summarizeJsonShape(value[0], depth + 1) : undefined,
+    };
+  }
+  if (typeof value === "object") {
+    const keys = Object.keys(value).slice(0, 40);
+    const children = {};
+    if (depth < 2) {
+      for (const key of keys.slice(0, 12)) {
+        children[key] = summarizeJsonShape(value[key], depth + 1);
+      }
+    }
+    return {
+      type: "object",
+      keys,
+      children: Object.keys(children).length ? children : undefined,
+    };
+  }
+  if (typeof value === "string") {
+    return { type: "string", length: value.length };
+  }
+  return { type: typeof value };
+}
+
+function summarizePostData(request) {
+  const data = request.postData();
+  if (!data) {
+    return null;
+  }
+  const headers = request.headers();
+  const contentType = headers["content-type"] || "";
+  const bytes = Buffer.byteLength(data);
+
+  if (/json/i.test(contentType) && bytes < 200000) {
+    try {
+      return {
+        kind: "json",
+        bytes,
+        shape: summarizeJsonShape(JSON.parse(data)),
+      };
+    } catch (error) {
+      return { kind: "json-unparsed", bytes };
+    }
+  }
+
+  if (/x-www-form-urlencoded/i.test(contentType) && bytes < 200000) {
+    return {
+      kind: "form-url-encoded",
+      bytes,
+      fields: Array.from(new URLSearchParams(data).keys()).slice(0, 40),
+    };
+  }
+
+  if (/multipart\/form-data/i.test(contentType)) {
+    const fields = Array.from(data.matchAll(/name="([^"]+)"/g))
+      .map((match) => match[1])
+      .filter((field, index, list) => list.indexOf(field) === index)
+      .slice(0, 40);
+    return {
+      kind: "multipart-form-data",
+      bytes,
+      fields,
+    };
+  }
+
+  return {
+    kind: "raw",
+    bytes,
+    contentType: contentType || undefined,
+  };
+}
+
+function isLikelyApiEvent(event) {
+  if (["xhr", "fetch"].includes(event.resourceType)) {
+    return true;
+  }
+  if (/json/i.test(event.contentType || "")) {
+    return true;
+  }
+  if (!["GET", "HEAD", "OPTIONS"].includes(event.method)) {
+    return true;
+  }
+  if (/api\.bubio\.ai/i.test(event.host) && /\/auth\/|\/functions\/|\/rest\/|\/rpc\//i.test(event.pathname)) {
+    return true;
+  }
+  if (/supabase\.co/i.test(event.host) && /\/auth\/|\/functions\/|\/rest\/|\/rpc\//i.test(event.pathname)) {
+    return true;
+  }
+  if (/\/api\/|\/graphql|\/rpc\//i.test(event.pathname)) {
+    return true;
+  }
+  return false;
+}
+
+function isFirstPartyBubioEvent(event) {
+  return /(^|\.)bubio\.ai$/i.test(event.host) || /supabase\.co$/i.test(event.host);
+}
+
+function createNetworkRecorder(page) {
+  const events = [];
+  const pending = [];
+  const requestIds = new Map();
+  let nextId = 1;
+
+  page.on("request", (request) => {
+    const requestId = nextId;
+    nextId += 1;
+    requestIds.set(request, requestId);
+    const safeUrl = sanitizeUrl(request.url());
+    events.push({
+      phase: "request",
+      id: requestId,
+      timestamp: new Date().toISOString(),
+      method: request.method(),
+      url: safeUrl.url,
+      host: safeUrl.host,
+      pathname: safeUrl.pathname,
+      queryRedacted: safeUrl.queryRedacted,
+      resourceType: request.resourceType(),
+      headers: pickSafeHeaders(request.headers()),
+      postData: summarizePostData(request),
+    });
+  });
+
+  page.on("response", (response) => {
+    const task = (async () => {
+      const request = response.request();
+      const safeUrl = sanitizeUrl(response.url());
+      const headers = response.headers();
+      const contentType = headers["content-type"] || "";
+      const contentLength = Number.parseInt(headers["content-length"] || "0", 10);
+      const event = {
+        phase: "response",
+        id: requestIds.get(request) || null,
+        timestamp: new Date().toISOString(),
+        method: request.method(),
+        status: response.status(),
+        url: safeUrl.url,
+        host: safeUrl.host,
+        pathname: safeUrl.pathname,
+        queryRedacted: safeUrl.queryRedacted,
+        resourceType: request.resourceType(),
+        contentType,
+        contentLength: Number.isFinite(contentLength) && contentLength > 0 ? contentLength : undefined,
+      };
+
+      if (/json/i.test(contentType) && (!contentLength || contentLength < 300000)) {
+        try {
+          event.jsonShape = summarizeJsonShape(await response.json());
+        } catch (error) {
+          event.jsonShape = { type: "unavailable" };
+        }
+      }
+      events.push(event);
+    })();
+    pending.push(task);
+    task.catch(() => {}).finally(() => {
+      const index = pending.indexOf(task);
+      if (index >= 0) {
+        pending.splice(index, 1);
+      }
+    });
+  });
+
+  return {
+    events,
+    async flush() {
+      await Promise.allSettled(pending);
+    },
+    buildSummary(meta) {
+      const endpointMap = new Map();
+      for (const event of events) {
+        if (event.phase !== "response") {
+          continue;
+        }
+        const key = `${event.method} ${event.host}${event.pathname}`;
+        if (!endpointMap.has(key)) {
+          endpointMap.set(key, {
+            method: event.method,
+            host: event.host,
+            pathname: event.pathname,
+            count: 0,
+            statuses: {},
+            resourceTypes: {},
+            contentTypes: {},
+            likelyApi: false,
+            firstParty: false,
+          });
+        }
+        const endpoint = endpointMap.get(key);
+        endpoint.count += 1;
+        endpoint.statuses[event.status] = (endpoint.statuses[event.status] || 0) + 1;
+        endpoint.resourceTypes[event.resourceType] = (endpoint.resourceTypes[event.resourceType] || 0) + 1;
+        if (event.contentType) {
+          const shortType = event.contentType.split(";")[0];
+          endpoint.contentTypes[shortType] = (endpoint.contentTypes[shortType] || 0) + 1;
+        }
+        endpoint.likelyApi = endpoint.likelyApi || isLikelyApiEvent(event);
+        endpoint.firstParty = endpoint.firstParty || isFirstPartyBubioEvent(event);
+      }
+
+      const endpoints = Array.from(endpointMap.values())
+        .sort((a, b) => Number(b.likelyApi) - Number(a.likelyApi) || b.count - a.count || `${a.host}${a.pathname}`.localeCompare(`${b.host}${b.pathname}`));
+
+      return {
+        ...meta,
+        redaction: {
+          queryStrings: "removed",
+          authHeaders: "not captured",
+          cookies: "not captured",
+          requestBodies: "shape only",
+          responseBodies: "JSON key shape only",
+          longPathSegments: "redacted",
+        },
+        endpoints,
+        apiCandidates: endpoints.filter((endpoint) => endpoint.likelyApi),
+        firstPartyApiCandidates: endpoints.filter((endpoint) => endpoint.likelyApi && endpoint.firstParty),
+        events,
+      };
+    },
+  };
+}
+
+function statusSummary(statuses) {
+  return Object.entries(statuses)
+    .map(([status, count]) => `${status}x${count}`)
+    .join(",");
 }
 
 async function launchPersistentChrome({
@@ -796,6 +1096,91 @@ async function runInspectStudio(options) {
   }
 }
 
+async function runDiscoverApi(options) {
+  const stateFile = path.resolve(expandHome(options["state-file"] || DEFAULT_STATE_FILE));
+  if (!fs.existsSync(stateFile)) {
+    fail(`Missing auth state file: ${stateFile}. Run capture-auth first.`);
+  }
+  const artifactDir = path.resolve(expandHome(options["artifact-dir"] || DEFAULT_DISCOVERY_DIR));
+  const observeMs = Number.parseInt(options["observe-ms"] || String(DEFAULT_OBSERVE_MS), 10);
+  if (!Number.isFinite(observeMs) || observeMs < 1000) {
+    fail(`Invalid --observe-ms value: ${options["observe-ms"]}`);
+  }
+  ensureSecureDir(artifactDir);
+
+  const startedAt = new Date().toISOString();
+  const { browser, context, page } = await launchContext({
+    stateFile,
+    headed: options.headless ? false : true,
+    outputDir: artifactDir,
+    deferGoto: true,
+  });
+  const recorder = createNetworkRecorder(page);
+
+  try {
+    logStep("Opening Bubio studio with network recorder enabled");
+    await page.goto(BUBIO_STUDIO_URL, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle").catch(() => {});
+    logStep("Checking Bubio auth state");
+    await ensureLoggedIn(page);
+    if (options["exercise-form"]) {
+      logStep("Exercising prompt/settings/upload controls without submitting generation");
+      if (options.prompt || options["prompt-file"]) {
+        await fillPrompt(page, readPrompt(options));
+      }
+      await ensureModel(page, options.model || "Seedance 2");
+      await ensureMode(page, options.mode || "Create");
+      await ensureAspect(page, options.aspect);
+      await ensureDuration(page, options.duration);
+      await ensureSound(page, options.sound);
+      const refs = resolveFiles(options);
+      if (refs.length > 0) {
+        const attached = await tryAttachFiles(page, refs);
+        if (!attached) {
+          fail("Could not find Bubio's media uploader while exercising form controls.");
+        }
+        await sleep(1500);
+      }
+    }
+    logStep(`Observing sanitized network traffic for ${observeMs}ms; no generation will be submitted`);
+    await sleep(observeMs);
+    await recorder.flush();
+
+    const timestamp = Date.now();
+    const screenshotPath = path.join(artifactDir, `bubio-api-discovery-${timestamp}.png`);
+    const summaryPath = path.join(artifactDir, `bubio-network-summary-${timestamp}.json`);
+    await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => {});
+    const summary = recorder.buildSummary({
+      generatedAt: new Date().toISOString(),
+      startedAt,
+      studioUrl: BUBIO_STUDIO_URL,
+      observeMs,
+      artifactDir,
+      screenshotPath,
+      note: "Sanitized endpoint discovery only. No Generate click was performed.",
+    });
+    fs.writeFileSync(summaryPath, `${JSON.stringify(summary, null, 2)}\n`);
+    lockFile(summaryPath);
+
+    console.log("First-party API endpoints:");
+    for (const endpoint of summary.firstPartyApiCandidates.slice(0, 80)) {
+      console.log(`${endpoint.method} ${endpoint.host}${endpoint.pathname} -> ${statusSummary(endpoint.statuses)} (${endpoint.count})`);
+    }
+    if (summary.firstPartyApiCandidates.length === 0) {
+      console.log("(none detected; try --exercise-form, a longer --observe-ms, or inspect manually while the recorder is running)");
+    }
+    const thirdPartyCount = summary.apiCandidates.length - summary.firstPartyApiCandidates.length;
+    if (thirdPartyCount > 0) {
+      console.log(`Other likely third-party network endpoints captured: ${thirdPartyCount}`);
+    }
+    console.log(`Saved sanitized network summary: ${summaryPath}`);
+    console.log(`Saved screenshot: ${screenshotPath}`);
+  } finally {
+    await context.close().catch(() => {});
+    await browser.close().catch(() => {});
+  }
+}
+
 async function runDownloadLatest(options) {
   const stateFile = path.resolve(expandHome(options["state-file"] || DEFAULT_STATE_FILE));
   const outputDir = path.resolve(expandHome(options["output-dir"] || DEFAULT_OUTPUT_DIR));
@@ -924,6 +1309,10 @@ async function main() {
   }
   if (command === "inspect-studio") {
     await runInspectStudio(options);
+    return;
+  }
+  if (command === "discover-api") {
+    await runDiscoverApi(options);
     return;
   }
   if (command === "download-latest") {
