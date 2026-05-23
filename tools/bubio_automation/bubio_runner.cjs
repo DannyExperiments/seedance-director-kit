@@ -1446,7 +1446,7 @@ async function runInspectStudio(options) {
 async function runDiscoverApi(options) {
   const stateFile = path.resolve(expandHome(options["state-file"] || DEFAULT_STATE_FILE));
   if (!fs.existsSync(stateFile)) {
-    fail(`Missing auth state file: ${stateFile}. Run capture-auth first.`);
+    fail(authRecoveryMessage(stateFile));
   }
   const artifactDir = path.resolve(expandHome(options["artifact-dir"] || DEFAULT_DISCOVERY_DIR));
   const observeMs = Number.parseInt(options["observe-ms"] || String(DEFAULT_OBSERVE_MS), 10);
