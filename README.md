@@ -1,8 +1,10 @@
-# Seedance Director Kit
+# Codex Video Director Kit
 
-This kit packages a public Codex skill plus the supporting playbooks and tools needed to direct high-quality Seedance 2.0 videos consistently.
+Open-source Codex video automation for directing high-quality Seedance 2.0 / Bubio videos end-to-end.
 
-Seedance Director Kit is open source under the MIT License and maintained by DannyExperiments.
+This kit packages a public Codex skill plus the supporting playbooks and tools needed to turn rough video ideas into generated clips with reference images, Seedance prompts, Bubio execution, MP4 retrieval, review sheets, and critique.
+
+Codex Video Director Kit is open source under the MIT License and maintained by DannyExperiments.
 
 It is designed for the workflow:
 
