@@ -2,6 +2,8 @@
 
 This kit packages a public Codex skill plus the supporting playbooks and tools needed to direct high-quality Seedance 2.0 videos consistently.
 
+Seedance Director Kit is open source under the MIT License and maintained by DannyExperiments.
+
 It is designed for the workflow:
 
 `rough idea -> strategy choice -> authored stills/storyboard -> Seedance prompt -> Bubio run -> critique -> next move`
@@ -18,6 +20,8 @@ The intended user experience is thread-first: Bubio renders the clip, but Codex 
   - a faster Bubio runner path for repeated work, including sanitized API discovery and local motion scoring
 - `examples/`
   - handoff and invocation examples
+- `CONTRIBUTING.md`, `SECURITY.md`, and `MAINTAINERS.md`
+  - open-source maintenance, review, and safety expectations
 
 ## What this is not
 
@@ -75,6 +79,10 @@ For another person, the best handoff is:
 2. this repo
 
 The skill is the front door. The repo is the operating system, prompt bank, and tooling bundle.
+
+## Maintainer Responsibilities
+
+The maintainer reviews workflow changes, prompt guidance, Bubio automation safety, release quality, issue triage, and security posture. The project intentionally keeps user-specific browser profiles, private prompts, cookies, credentials, and generated private assets out of the public core.
 
 ## Suggested companion structure
 
